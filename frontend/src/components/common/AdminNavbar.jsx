@@ -5,8 +5,9 @@ export default function AdminNavbar() {
     return (
         <BNavbar bg="primary" variant="dark" expand="lg" className="shadow-sm sticky-top mb-3">
             <Container>
-                <BNavbar.Brand href="#home" className="fw-bold">
-                    <i className="bi bi-house-door-fill me-2"></i>Boarding System
+                <BNavbar.Brand href="#home" className="d-flex align-items-center">
+                    <i className="bi bi-house-heart-fill me-2 fs-4"></i>
+                    <span className="brand-logo fs-4">StayMate</span>
                 </BNavbar.Brand>
                 <BNavbar.Toggle aria-controls="admin-navbar-nav" />
                 <BNavbar.Collapse id="admin-navbar-nav">

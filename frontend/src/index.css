@@ -4,6 +4,21 @@ body {
   font-family: var(--bs-body-font-family);
 }
 
+/* Brand Logo Style */
+.brand-logo {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  /* Removed gradient for single color professional look */
+  color: inherit;
+  /* Inherit color from parent (navbar usually) */
+  text-shadow: none;
+}
+
+.brand-logo-dark {
+  color: var(--bs-primary);
+}
+
 /* Navbar Enhancements */
 .navbar {
   transition: all 0.3s ease;
@@ -70,4 +85,222 @@ body {
 .navbar-search:focus {
   width: 300px;
   box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+}
+
+/* Landing Page Animations & Styles */
+.hover-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, .175) !important;
+}
+
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-text-white {
+  transition: color 0.2s ease;
+}
+
+.hover-text-white:hover {
+  color: #fff !important;
+}
+
+/* Fade In Up Animation */
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+  opacity: 0;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Feature Icon Box */
+.icon-box {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover .icon-box {
+  background-color: var(--bs-primary) !important;
+  color: white !important;
+}
+
+/* Floating Animation (Optional if needed for other elements) */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.delay-1000 {
+  animation-delay: 1s;
+}
+
+.delay-2000 {
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Blur Utility */
+.blur-xl {
+  filter: blur(60px);
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Animated Gradient Background */
+.bg-animate-gradient {
+  background: linear-gradient(-45deg, #0b0d93, #373fcb, #1389ff, #8dd9ff);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Glassmorphism Utilities */
+.backdrop-blur {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.fw-black {
+  font-weight: 900;
+}
+
+/* Pulse Animation */
+.animate-pulse {
+  animation: pulse 4s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.1;
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: scale(0.95);
+    opacity: 0.1;
+  }
+}
+
+/* Hover Glow */
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Timeline Responsive Adjustments */
+@media (max-width: 767.98px) {
+  .timeline-container .position-absolute.h-100 {
+    display: none;
+  }
+}
+
+/* Responsive Hero Adjustments */
+@media (max-width: 991.98px) {
+  .hero-section {
+    text-align: center;
+    padding-top: 60px !important;
+    padding-bottom: 60px !important;
+  }
+
+  .hero-logo-container {
+    width: 280px !important;
+    height: 280px !important;
+    padding: 2rem !important;
+  }
+
+  .hero-logo-circle {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .hero-logo-icon {
+    font-size: 2.5rem !important;
+  }
+
+  .hero-logo-text {
+    font-size: 2.5rem !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-logo-container {
+    width: 240px !important;
+    height: 240px !important;
+    padding: 1.5rem !important;
+  }
+
+  .hero-logo-icon {
+    font-size: 2rem !important;
+  }
+
+  .hero-logo-text {
+    font-size: 2rem !important;
+  }
 }

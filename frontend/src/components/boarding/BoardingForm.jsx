@@ -4,7 +4,7 @@ import Button from '../common/Button';
 
 export default function BoardingForm() {
     return (
-        <Card className="shadow-sm">
+        <Card className="shadow-sm border-light">
             <Card.Body>
                 <Form>
                     <Form.Group className="mb-3" controlId="formBasicEmail">

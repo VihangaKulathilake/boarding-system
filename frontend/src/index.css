@@ -1,67 +1,137 @@
-/* Global CSS overrides */
-body {
-  /* Ensure Bootstrap font is used */
-  font-family: var(--bs-body-font-family);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
 }
 
-/* Brand Logo Style */
-.brand-logo {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  /* Removed gradient for single color professional look */
-  color: inherit;
-  /* Inherit color from parent (navbar usually) */
-  text-shadow: none;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
 }
 
-.brand-logo-dark {
-  color: var(--bs-primary);
-}
+@layer components {
+  .brand-logo {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: inherit;
+    text-shadow: none;
+  }
 
-/* Navbar Enhancements */
-.navbar {
-  transition: all 0.3s ease;
-}
+  .brand-logo-dark {
+    @apply text-primary;
+  }
 
-/* Nav Link Pill Effect */
-.navbar-nav .nav-link {
-  position: relative;
-  transition: all 0.3s ease;
-  border-radius: 50px;
-  /* Pill shape */
-  margin: 0 5px;
-}
+  .navbar {
+    @apply transition-all duration-300;
+  }
 
-.navbar-nav .nav-link:hover,
-.navbar-nav .nav-link:focus {
-  background-color: rgba(255, 255, 255, 0.2);
-  /* Semi-transparent white */
-  transform: translateY(-2px);
-  /* Slight lift */
-}
+  .navbar-nav .nav-link {
+    @apply relative transition-all duration-300 rounded-full mx-1;
+  }
 
-/* Remove old underline effect */
-.navbar-nav .nav-link::after {
-  display: none;
-}
+  .navbar-nav .nav-link:hover,
+  .navbar-nav .nav-link:focus {
+    @apply bg-white/20 -translate-y-0.5;
+  }
 
-/* Navbar Brand Animation */
-.navbar-brand {
-  transition: transform 0.2s;
-}
+  .dropdown-menu {
+    animation: slideDown 0.3s ease forwards;
+    transform-origin: top center;
+    @apply border-none shadow-xl;
+  }
 
-.navbar-brand:hover {
-  transform: scale(1.05) rotate(-2deg);
-  /* Fun tilt */
-}
+  .navbar-search {
+    @apply transition-all duration-300 w-48;
+  }
 
-/* Dropdown Animation */
-.dropdown-menu {
-  animation: slideDown 0.3s ease forwards;
-  transform-origin: top center;
-  border: none;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  .navbar-search:focus {
+    @apply w-72 ring-2 ring-white/20;
+  }
+
+  .hover-card {
+    @apply transition-all duration-300;
+  }
+
+  .hover-card:hover {
+    @apply -translate-y-2 shadow-2xl;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-scale:hover {
+    @apply scale-105;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    @apply opacity-0 translate-y-5;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+    @apply opacity-0;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-custom {
+    animation: pulse 4s infinite ease-in-out;
+  }
 }
 
 @keyframes slideDown {
@@ -74,67 +144,6 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Search input expansion */
-.navbar-search {
-  transition: width 0.4s ease-in-out;
-  width: 200px;
-}
-
-.navbar-search:focus {
-  width: 300px;
-  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-}
-
-/* Landing Page Animations & Styles */
-.hover-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hover-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 1rem 3rem rgba(0, 0, 0, .175) !important;
-}
-
-.hover-scale {
-  transition: transform 0.2s ease;
-}
-
-.hover-scale:hover {
-  transform: scale(1.05);
-}
-
-.hover-text-white {
-  transition: color 0.2s ease;
-}
-
-.hover-text-white:hover {
-  color: #fff !important;
-}
-
-/* Fade In Up Animation */
-.animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.animate-fade-in {
-  animation: fadeIn 1s ease-out forwards;
-  opacity: 0;
-}
-
-.delay-100 {
-  animation-delay: 0.1s;
-}
-
-.delay-200 {
-  animation-delay: 0.2s;
-}
-
-.delay-300 {
-  animation-delay: 0.3s;
 }
 
 @keyframes fadeInUp {
@@ -150,90 +159,22 @@ body {
   }
 }
 
-/* Feature Icon Box */
-.icon-box {
-  transition: all 0.3s ease;
-}
-
-.hover-card:hover .icon-box {
-  background-color: var(--bs-primary) !important;
-  color: white !important;
-}
-
-/* Floating Animation (Optional if needed for other elements) */
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.delay-1000 {
-  animation-delay: 1s;
-}
-
-.delay-2000 {
-  animation-delay: 2s;
-}
-
 @keyframes float {
-  0% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
 
   50% {
     transform: translateY(-20px);
   }
-
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-/* Blur Utility */
-.blur-xl {
-  filter: blur(60px);
-}
-
-.shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-/* Animated Gradient Background */
-.bg-animate-gradient {
-  background: linear-gradient(-45deg, #0b0d93, #373fcb, #1389ff, #8dd9ff);
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
-}
-
-@keyframes gradientBG {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Glassmorphism Utilities */
-.backdrop-blur {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.fw-black {
-  font-weight: 900;
-}
-
-/* Pulse Animation */
-.animate-pulse {
-  animation: pulse 4s infinite ease-in-out;
 }
 
 @keyframes pulse {
-  0% {
+
+  0%,
+  100% {
     transform: scale(0.95);
     opacity: 0.1;
   }
@@ -241,66 +182,5 @@ body {
   50% {
     transform: scale(1.05);
     opacity: 0.2;
-  }
-
-  100% {
-    transform: scale(0.95);
-    opacity: 0.1;
-  }
-}
-
-/* Hover Glow */
-.hover-glow:hover {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Timeline Responsive Adjustments */
-@media (max-width: 767.98px) {
-  .timeline-container .position-absolute.h-100 {
-    display: none;
-  }
-}
-
-/* Responsive Hero Adjustments */
-@media (max-width: 991.98px) {
-  .hero-section {
-    text-align: center;
-    padding-top: 60px !important;
-    padding-bottom: 60px !important;
-  }
-
-  .hero-logo-container {
-    width: 280px !important;
-    height: 280px !important;
-    padding: 2rem !important;
-  }
-
-  .hero-logo-circle {
-    width: 80px !important;
-    height: 80px !important;
-  }
-
-  .hero-logo-icon {
-    font-size: 2.5rem !important;
-  }
-
-  .hero-logo-text {
-    font-size: 2.5rem !important;
-  }
-}
-
-@media (max-width: 575.98px) {
-  .hero-logo-container {
-    width: 240px !important;
-    height: 240px !important;
-    padding: 1.5rem !important;
-  }
-
-  .hero-logo-icon {
-    font-size: 2rem !important;
-  }
-
-  .hero-logo-text {
-    font-size: 2rem !important;
   }
 }

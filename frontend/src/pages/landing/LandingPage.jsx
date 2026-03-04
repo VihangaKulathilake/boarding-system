@@ -1,21 +1,27 @@
 import React from 'react';
 import LandingNavbar from '../../components/common/LandingNavbar';
 import HeroSection from '../../components/landing/HeroSection';
+import StatsSection from '../../components/landing/StatsSection';
 import FeaturesSection from '../../components/landing/FeaturesSection';
 import HowItWorksSection from '../../components/landing/HowItWorksSection';
 import BenefitsSection from '../../components/landing/BenefitsSection';
 import CTASection from '../../components/landing/CTASection';
 import LandingFooter from '../../components/common/LandingFooter';
 
+import { Button } from "@/components/ui/button";
+
 export default function LandingPage() {
     return (
-        <div className="landing-page font-sans">
+        <div className="landing-page font-sans bg-white min-h-screen">
             <LandingNavbar />
-            <HeroSection />
-            <FeaturesSection />
-            <HowItWorksSection />
-            <BenefitsSection />
-            <CTASection />
+            <main>
+                <HeroSection />
+                <StatsSection />
+                <FeaturesSection />
+                <HowItWorksSection />
+                <BenefitsSection />
+                <CTASection />
+            </main>
             <LandingFooter />
         </div>
     );

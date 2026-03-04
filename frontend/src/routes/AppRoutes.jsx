@@ -17,6 +17,7 @@ import MyBookings from '../pages/client/MyBookings';
 import Maintenance from '../pages/client/Maintenance';
 import Profile from '../pages/client/Profile';
 import NotFound from '../NotFound';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 export default function AppRoutes() {
     return (
@@ -28,23 +29,28 @@ export default function AppRoutes() {
             <Route path="/register" element={<Register />} />
 
             {/* User/Client Routes */}
-            <Route path="/client-home" element={<ClientHome />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/boarding/:id" element={<BoardingDetails />} />
-            <Route path="/my-bookings" element={<MyBookings />} />
-            <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route element={<ProtectedRoute allowedRoles={["tenant"]} />}>
+                <Route path="/client-home" element={<ClientHome />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/boarding/:id" element={<BoardingDetails />} />
+                <Route path="/my-bookings" element={<MyBookings />} />
+                <Route path="/maintenance" element={<Maintenance />} />
+                <Route path="/profile" element={<Profile />} />
+            </Route>
 
             {/* Admin/Dashboard Routes */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/boardings" element={<Boardings />} />
-            <Route path="/boardings/add" element={<AddBoarding />} />
-            <Route path="/boardings/edit/:id" element={<EditBoarding />} />
+            <Route element={<ProtectedRoute allowedRoles={["landlord"]} />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/boardings" element={<Boardings />} />
+                <Route path="/boardings/add" element={<AddBoarding />} />
+                <Route path="/boardings/edit/:id" element={<EditBoarding />} />
+                <Route path="/tenants" element={<Tenants />} />
+                <Route path="/tenants/add" element={<AddTenant />} />
+            </Route>
 
-            <Route path="/tenants" element={<Tenants />} />
-            <Route path="/tenants/add" element={<AddTenant />} />
-
-            <Route path="/payments" element={<Payments />} />
+            <Route element={<ProtectedRoute allowedRoles={["tenant", "landlord"]} />}>
+                <Route path="/payments" element={<Payments />} />
+            </Route>
 
             {/* Fallback */}
             <Route path="*" element={<NotFound />} />

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { loginUser } from "@/api/auth";
 import { LOGIN_MESSAGES, getLoginErrorMessage } from "@/messages/authMessages";
+import AuthStatusMessage from "@/components/common/AuthStatusMessage";
+import { getDefaultRouteByRole, saveAuthSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,12 +45,11 @@ export default function Login() {
       setIsSubmitting(true);
       const data = await loginUser(formData);
 
-      localStorage.setItem("token", data.token);
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
+      saveAuthSession({ token: data.token, user: data.user });
+      const userRole = data?.user?.role;
+      const redirectPath = getDefaultRouteByRole(userRole);
 
-      navigate("/");
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       setError(getLoginErrorMessage(err));
     } finally {
@@ -229,12 +230,13 @@ export default function Login() {
             </motion.div>
 
             {error && (
-              <motion.p
+              <motion.div
                 variants={itemVariants}
-                className="text-sm font-semibold text-red-600"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
               >
-                {error}
-              </motion.p>
+                <AuthStatusMessage type="error" message={error} />
+              </motion.div>
             )}
 
             <motion.div variants={itemVariants} className="flex items-center justify-between">

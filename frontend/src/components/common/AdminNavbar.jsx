@@ -11,7 +11,7 @@ import {
     Menu,
     Home
 } from "lucide-react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,8 +31,16 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { clearAuthSession } from "@/lib/auth";
 
 export default function AdminNavbar() {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        clearAuthSession();
+        navigate("/login", { replace: true });
+    };
+
     const navLinks = [
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "Boardings", href: "/boardings", icon: Building2 },
@@ -97,7 +105,7 @@ export default function AdminNavbar() {
                                 <span>Settings</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive cursor-pointer">
+                            <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>
                                 <LogOut className="mr-2 h-4 w-4" />
                                 <span>Log out</span>
                             </DropdownMenuItem>
@@ -140,7 +148,11 @@ export default function AdminNavbar() {
                                             <Button variant="ghost" className="justify-start gap-3 h-12 text-lg font-medium">
                                                 <Settings className="w-5 h-5" /> Settings
                                             </Button>
-                                            <Button variant="ghost" className="justify-start gap-3 h-12 text-lg font-medium text-destructive hover:text-destructive hover:bg-destructive/10">
+                                            <Button
+                                                variant="ghost"
+                                                className="justify-start gap-3 h-12 text-lg font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                onClick={handleLogout}
+                                            >
                                                 <LogOut className="w-5 h-5" /> Logout
                                             </Button>
                                         </div>

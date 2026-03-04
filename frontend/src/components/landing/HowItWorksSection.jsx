@@ -1,70 +1,85 @@
 import React from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { UserPlus, Users, BarChart3, Check } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const steps = [
     {
         number: '01',
         title: 'Sign Up & Setup',
         description: 'Create your account and set up your property profile in minutes. Add rooms, amenities, and pricing details.',
-        icon: 'bi-person-plus-fill',
-        color: 'primary'
+        icon: UserPlus,
+        color: 'bg-blue-600',
+        shadow: 'shadow-blue-200'
     },
     {
         number: '02',
         title: 'Add Tenants',
         description: 'Input tenant details and assign them to rooms easily. Send invitations for them to join the platform.',
-        icon: 'bi-people-fill',
-        color: 'success'
+        icon: Users,
+        color: 'bg-emerald-600',
+        shadow: 'shadow-emerald-200'
     },
     {
         number: '03',
         title: 'Manage & Track',
         description: 'Monitor payments, handle maintenance requests, and watch your business grow with real-time analytics.',
-        icon: 'bi-graph-up-arrow',
-        color: 'info'
+        icon: BarChart3,
+        color: 'bg-indigo-600',
+        shadow: 'shadow-indigo-200'
     }
 ];
 
 export default function HowItWorksSection() {
     return (
-        <section className="py-5 bg-white" id="how-it-works">
-            <Container className="py-5">
-                <div className="text-center mb-5">
-                    <h2 className="display-5 fw-bold mb-3">How It Works</h2>
-                    <p className="text-muted lead">Get up and running in three simple steps.</p>
+        <section className="py-24 bg-white" id="how-it-works">
+            <div className="container mx-auto px-4">
+                <div className="text-center mb-20">
+                    <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">How It Works</h2>
+                    <p className="text-slate-500 text-lg">Get up and running in three simple steps.</p>
                 </div>
 
-                <div className="position-relative timeline-container">
-                    {/* Vertical Line */}
-                    <div className="position-absolute top-0 start-50 translate-middle-x h-100 bg-light d-none d-md-block" style={{ width: '4px', borderRadius: '2px' }}></div>
+                <div className="max-w-5xl mx-auto relative">
+                    {/* Vertical Connecting Line (Desktop) */}
+                    <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-100 -translate-x-1/2 hidden md:block rounded-full"></div>
 
-                    {steps.map((step, idx) => (
-                        <Row key={idx} className="mb-5 align-items-center">
-                            {/* Content Side */}
-                            <Col md={5} className={`text-md-${idx % 2 !== 0 ? 'start' : 'end'} text-center mb-3 mb-md-0 order-2 ${idx % 2 !== 0 ? 'order-md-3' : 'order-md-1'}`}>
-                                <Card className="border-0 shadow-sm hover-card rounded-4 position-relative overflow-hidden h-100">
-                                    <div className={`position-absolute top-0 start-0 w-100 h-1 bg-${step.color}`}></div>
-                                    <Card.Body className="p-4">
-                                        <h3 className="fw-bold h4 mb-3">{step.title}</h3>
-                                        <p className="text-muted mb-0">{step.description}</p>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-
-                            {/* Center Icon/Number */}
-                            <Col md={2} className="text-center position-relative order-1 order-md-2 mb-3 mb-md-0">
-                                <div className={`rounded-circle bg-${step.color} text-white d-flex align-items-center justify-content-center mx-auto shadow-lg position-relative z-1 hover-scale`}
-                                    style={{ width: '60px', height: '60px', fontSize: '1.5rem' }}>
-                                    <i className={`bi ${step.icon}`}></i>
+                    <div className="space-y-16 md:space-y-0">
+                        {steps.map((step, idx) => (
+                            <div key={idx} className="relative flex flex-col md:flex-row items-center gap-8 md:gap-0">
+                                {/* Content Side */}
+                                <div className={`flex-1 w-full order-2 ${idx % 2 !== 0 ? 'md:order-2 md:text-left' : 'md:order-1 md:text-right'}`}>
+                                    <Card className="border-none shadow-lg hover:shadow-xl transition-shadow rounded-2xl overflow-hidden group">
+                                        <div className={`h-1.5 w-full ${step.color}`}></div>
+                                        <CardContent className="p-8">
+                                            <span className="text-xs font-black text-slate-300 mb-2 block uppercase tracking-[0.2em]">{step.number}</span>
+                                            <h3 className="text-2xl font-bold text-slate-900 mb-4">{step.title}</h3>
+                                            <p className="text-slate-500 leading-relaxed text-sm md:text-base">{step.description}</p>
+                                        </CardContent>
+                                    </Card>
                                 </div>
-                            </Col>
 
-                            {/* Empty Side for balance */}
-                            <Col md={5} className={`d-none d-md-block order-3 ${idx % 2 !== 0 ? 'order-md-1' : 'order-md-3'}`}></Col>
-                        </Row>
-                    ))}
+                                {/* Center Icon */}
+                                <div className="z-10 w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border-8 border-slate-50 flex items-center justify-center order-1 md:order-2 md:mx-12 shrink-0">
+                                    <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full ${step.color} ${step.shadow} flex items-center justify-center text-white shadow-xl transition-transform duration-300 hover:scale-110`}>
+                                        <step.icon className="w-6 h-6 md:w-8 md:h-8" />
+                                    </div>
+                                </div>
+
+                                {/* Placeholder for empty side */}
+                                <div className={`flex-1 hidden md:block order-3 ${idx % 2 !== 0 ? 'md:order-1' : 'md:order-3'}`}></div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </Container>
+
+                <div className="mt-20 text-center">
+                    <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-slate-50 text-slate-600 font-medium text-sm">
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                            <Check className="w-3 h-3" />
+                        </div>
+                        It's that simple to get started today.
+                    </div>
+                </div>
+            </div>
         </section>
     );
 }

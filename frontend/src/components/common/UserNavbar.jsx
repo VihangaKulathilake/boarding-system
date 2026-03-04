@@ -1,48 +1,163 @@
 import React from 'react';
-import { Navbar as BNavbar, Container, Nav, NavDropdown, Form } from 'react-bootstrap';
+import {
+    Home,
+    DoorOpen,
+    CreditCard,
+    Headset,
+    Search,
+    UserCircle,
+    History,
+    LogOut,
+    Menu,
+    Wrench
+} from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export default function UserNavbar() {
+    const navLinks = [
+        { name: "Home", href: "/client-home", icon: Home },
+        { name: "Find Boarding", href: "/marketplace", icon: Search },
+        { name: "My Stays", href: "/my-bookings", icon: DoorOpen },
+        { name: "Payments", href: "/payments", icon: CreditCard },
+        { name: "Maintenance", href: "/maintenance", icon: Wrench },
+    ];
+
     return (
-        <BNavbar bg="primary" variant="dark" expand="lg" className="shadow-sm sticky-top mb-3">
-            <Container>
-                <BNavbar.Brand href="#home" className="d-flex align-items-center">
-                    <i className="bi bi-house-heart-fill me-2 fs-4"></i>
-                    <span className="brand-logo fs-4">StayMate</span>
-                </BNavbar.Brand>
-                <BNavbar.Toggle aria-controls="user-navbar-nav" />
-                <BNavbar.Collapse id="user-navbar-nav">
-                    <Nav className="me-auto">
-                        <Nav.Link href="#home" className="px-3">
-                            <i className="bi bi-house me-1"></i> Home
-                        </Nav.Link>
-                        <Nav.Link href="#my-room" className="px-3">
-                            <i className="bi bi-door-open me-1"></i> My Room
-                        </Nav.Link>
-                        <Nav.Link href="#payments" className="px-3">
-                            <i className="bi bi-credit-card me-1"></i> Pay Rent
-                        </Nav.Link>
-                        <Nav.Link href="#support" className="px-3">
-                            <i className="bi bi-headset me-1"></i> Support
-                        </Nav.Link>
-                    </Nav>
-                    <Form className="d-flex me-2">
-                        <Form.Control
+        <nav className="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
+            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+                {/* Brand */}
+                <div className="flex items-center gap-8">
+                    <Link to="/client-home" className="flex items-center gap-2 transition-opacity hover:opacity-80 no-underline">
+                        <div className="bg-primary p-1.5 rounded-lg">
+                            <Home className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xl font-bold tracking-tight text-slate-900">StayMate</span>
+                    </Link>
+
+                    {/* Desktop Main Nav */}
+                    <div className="hidden lg:flex items-center gap-1">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.name}
+                                to={link.href}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 rounded-md hover:bg-slate-100 transition-colors no-underline"
+                            >
+                                <link.icon className="w-4 h-4" />
+                                {link.name}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    {/* Search Bar */}
+                    <div className="hidden md:flex relative w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
                             type="search"
-                            placeholder="Search..."
-                            className="me-2 navbar-search rounded-pill bg-light border-0"
-                            aria-label="Search"
+                            placeholder="Search boardings..."
+                            className="pl-9 h-9 bg-slate-50 border-slate-200 focus-visible:ring-primary/20 rounded-full"
                         />
-                    </Form>
-                    <Nav>
-                        <NavDropdown title={<><i className="bi bi-person-circle me-1"></i> User</>} id="user-nav-dropdown" align="end">
-                            <NavDropdown.Item href="#profile">My Profile</NavDropdown.Item>
-                            <NavDropdown.Item href="#history">Payment History</NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item href="#logout" className="text-danger">Logout</NavDropdown.Item>
-                        </NavDropdown>
-                    </Nav>
-                </BNavbar.Collapse>
-            </Container>
-        </BNavbar>
+                    </div>
+
+                    {/* User Profile Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden hover:bg-slate-100">
+                                <Avatar className="h-9 w-9 border border-slate-200">
+                                    <AvatarFallback className="bg-primary/10 text-primary">JD</AvatarFallback>
+                                </Avatar>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <Link to="/profile" className="no-underline text-slate-900">
+                                <DropdownMenuItem className="cursor-pointer">
+                                    <UserCircle className="mr-2 h-4 w-4 text-slate-500" />
+                                    <span>My Profile</span>
+                                </DropdownMenuItem>
+                            </Link>
+                            <Link to="/payments" className="no-underline text-slate-900">
+                                <DropdownMenuItem className="cursor-pointer">
+                                    <History className="mr-2 h-4 w-4 text-slate-500" />
+                                    <span>Payment History</span>
+                                </DropdownMenuItem>
+                            </Link>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive cursor-pointer">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Log out</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Mobile Menu */}
+                    <div className="lg:hidden">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-slate-700 hover:bg-slate-100">
+                                    <Menu className="w-6 h-6" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="w-[300px]">
+                                <SheetHeader>
+                                    <SheetTitle className="text-left flex items-center gap-2">
+                                        <Home className="w-5 h-5 text-primary" />
+                                        <span>StayMate</span>
+                                    </SheetTitle>
+                                </SheetHeader>
+                                <div className="flex flex-col gap-2 mt-8">
+                                    {navLinks.map((link) => (
+                                        <Link
+                                            key={link.name}
+                                            to={link.href}
+                                            className="flex items-center gap-3 px-4 py-3 text-lg font-medium text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all no-underline"
+                                        >
+                                            <link.icon className="w-5 h-5" />
+                                            {link.name}
+                                        </Link>
+                                    ))}
+                                    <hr className="my-4" />
+                                    <div className="px-4 py-2">
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Account</p>
+                                        <div className="flex flex-col gap-2">
+                                            <Button variant="ghost" className="justify-start gap-3 h-12 text-lg font-medium">
+                                                <UserCircle className="w-5 h-5" /> Profile
+                                            </Button>
+                                            <Button variant="ghost" className="justify-start gap-3 h-12 text-lg font-medium">
+                                                <History className="w-5 h-5" /> History
+                                            </Button>
+                                            <Button variant="ghost" className="justify-start gap-3 h-12 text-lg font-medium text-destructive hover:text-destructive hover:bg-destructive/10">
+                                                <LogOut className="w-5 h-5" /> Logout
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+                    </div>
+                </div>
+            </div>
+        </nav>
     );
 }

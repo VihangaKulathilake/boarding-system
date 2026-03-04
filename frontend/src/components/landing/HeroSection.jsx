@@ -1,78 +1,94 @@
 import React from 'react';
-import { Container, Row, Col, Button, Card } from 'react-bootstrap';
+import { Rocket, ArrowRight, Home, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
     return (
-        <div className="hero-section d-flex align-items-center position-relative overflow-hidden" style={{
-            minHeight: '100vh',
-            paddingTop: '100px',
-            paddingBottom: '100px',
-            backgroundSize: '400% 400%',
-        }}>
-            <div className="bg-animate-gradient position-absolute top-0 start-0 w-100 h-100 z-0"></div>
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900 pt-20">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-slate-900 to-slate-900 animate-pulse"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-float"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-float delay-1000"></div>
+            </div>
 
-            {/* Geometric Overlay Pattern */}
-            <div className="position-absolute top-0 start-0 w-100 h-100 z-0 opacity-10" style={{
-                backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)',
+            {/* Pattern Overlay */}
+            <div className="absolute inset-0 z-0 opacity-[0.03]" style={{
+                backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
                 backgroundSize: '40px 40px'
             }}></div>
 
-            <Container className="position-relative z-1">
-                <Row className="align-items-center">
-                    <Col lg={6} className="text-white mb-5 mb-lg-0 text-center text-lg-start">
-                        <div className="d-inline-block px-3 py-1 rounded-pill bg-white bg-opacity-25 border border-white border-opacity-25 mb-4 animate-fade-in-up backdrop-blur">
-                            <span className="small fw-bold">🚀 Redefining Property Management</span>
+            <div className="container mx-auto px-4 relative z-10">
+                <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    {/* Content Column */}
+                    <div className="text-center lg:text-left space-y-8 max-w-2xl mx-auto lg:mx-0">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <Rocket className="w-4 h-4 text-warning" />
+                            <span className="text-xs font-bold tracking-wider uppercase">Redefining Property Management</span>
                         </div>
 
-                        <h1 className="display-3 fw-black mb-4 animate-fade-in-up delay-100 ls-tight">
+                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.1] animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-100">
                             Manage Your <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-warning to-danger" style={{
-                                backgroundImage: 'linear-gradient(45deg, #FFD700, #FF6B6B)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>Creative Space</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-rose-400">
+                                Creative Space
+                            </span>
                         </h1>
 
-                        <p className="lead mb-5 opacity-90 animate-fade-in-up delay-200 mx-auto mx-lg-0" style={{ fontWeight: '300', maxWidth: '600px' }}>
+                        <p className="text-xl text-slate-300 font-light leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                             StayMate isn't just a tool; it's your creative partner in managing boarding houses. Experience vibrant analytics, colorful insights, and seamless control.
                         </p>
 
-                        <div className="d-flex gap-3 animate-fade-in-up delay-300 justify-content-center justify-content-lg-start flex-column flex-sm-row">
-                            <Button variant="light" size="lg" className="rounded-pill px-5 py-3 fw-bold text-primary shadow-lg hover-scale">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+                            <Button size="lg" className="rounded-full h-14 px-10 text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform group">
                                 Start Creating
+                                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Button>
-                            <Button variant="outline-light" size="lg" className="rounded-pill px-5 py-3 fw-bold hover-scale backdrop-blur">
+                            <Button size="lg" variant="outline" className="rounded-full h-14 px-10 text-lg font-bold border-white/20 bg-white/5 text-white backdrop-blur-md hover:bg-white/10 hover:scale-105 transition-transform">
                                 Explore Features
                             </Button>
                         </div>
-                    </Col>
+                    </div>
 
-                    <Col lg={6} className="position-relative animate-fade-in delay-300 d-flex justify-content-center align-items-center mt-4 mt-lg-0">
-                        {/* Sole Creative Logo Composition */}
-                        <div className="position-relative animate-float">
-                            <div className="hero-logo-container bg-white bg-opacity-10 backdrop-blur rounded-circle p-5 shadow-2xl border border-white border-opacity-25 d-flex align-items-center justify-content-center"
-                                style={{ width: '350px', height: '350px', transition: 'all 0.3s ease' }}>
-                                <div className="text-center">
-                                    <div className="hero-logo-circle bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-lg"
-                                        style={{ width: '120px', height: '120px', background: 'linear-gradient(135deg, #FFD700 0%, #FF6B6B 100%)', transition: 'all 0.3s ease' }}>
-                                        <i className="hero-logo-icon bi bi-house-heart-fill text-white" style={{ fontSize: '4rem', transition: 'all 0.3s ease' }}></i>
+                    {/* Visual Column */}
+                    <div className="relative flex justify-center items-center animate-in fade-in zoom-in duration-1000 delay-500">
+                        {/* Main Logo Composition */}
+                        <div className="relative group">
+                            {/* Decorative Orbitals */}
+                            <div className="absolute inset-0 -m-8 border border-white/5 rounded-full animate-spin-slow"></div>
+                            <div className="absolute inset-0 -m-16 border border-white/5 rounded-full animate-reverse-spin-slow"></div>
+
+                            <div className="relative w-80 h-80 md:w-96 md:h-96 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 p-12 flex items-center justify-center shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:bg-white/10 group-hover:border-white/20">
+                                <div className="text-center space-y-4">
+                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center mx-auto shadow-2xl shadow-rose-500/20 transform -rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                                        <Home className="w-12 h-12 md:w-16 md:h-16 text-white stroke-[2.5px]" />
                                     </div>
-                                    <h1 className="hero-logo-text display-4 fw-black text-white mb-0 ls-tight" style={{ transition: 'all 0.3s ease' }}>StayMate</h1>
-                                    <div className="d-flex justify-content-center mt-2">
-                                        <div className="bg-white rounded-pill" style={{ width: '40px', height: '4px' }}></div>
+                                    <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">StayMate</h2>
+                                    <div className="w-12 h-1.5 bg-white/30 rounded-full mx-auto transform translate-y-2"></div>
+                                </div>
+
+                                {/* Floating Badge 1 */}
+                                <div className="absolute -top-4 -right-4 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl shadow-xl animate-float">
+                                    <Heart className="w-6 h-6 text-rose-400 fill-rose-400" />
+                                </div>
+
+                                {/* Floating Badge 2 */}
+                                <div className="absolute -bottom-8 -left-8 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl shadow-xl animate-float delay-700">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+                                        <span className="text-xs font-bold text-white uppercase tracking-widest">Active</span>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Decorative Orbiting Elements */}
-                            <div className="position-absolute top-0 start-0 w-100 h-100 border border-white border-opacity-10 rounded-circle"
-                                style={{ transform: 'scale(1.2)', zIndex: -1 }}></div>
-                            <div className="position-absolute top-0 start-0 w-100 h-100 border border-white border-opacity-5 rounded-circle"
-                                style={{ transform: 'scale(1.5)', zIndex: -2 }}></div>
                         </div>
-                    </Col>
-                </Row>
-            </Container>
-        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30 animate-bounce">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Scroll</span>
+                <div className="w-[1px] h-12 bg-gradient-to-b from-white/30 to-transparent"></div>
+            </div>
+        </section>
     );
 }

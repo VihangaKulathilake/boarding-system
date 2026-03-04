@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar as BNavbar, Container, Nav, Button } from 'react-bootstrap';
+import { Home, Menu } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 export default function LandingNavbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -12,38 +22,117 @@ export default function LandingNavbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const navLinks = [
+        { name: "Home", href: "/" },
+        { name: "Features", href: "/#features" },
+        { name: "About", href: "/#about" },
+        { name: "Contact", href: "/#contact" },
+    ];
+
     return (
-        <BNavbar
-            bg={scrolled ? "white" : "transparent"}
-            variant={scrolled ? "light" : "dark"}
-            expand="lg"
-            fixed="top"
-            className={`transition-all ${scrolled ? 'shadow-sm py-2' : 'py-3'}`}
-            style={{ transition: 'all 0.3s ease' }}
+        <nav
+            className={cn(
+                "fixed top-0 w-full z-50 transition-all duration-300",
+                scrolled
+                    ? "bg-white/80 backdrop-blur-md shadow-sm py-2"
+                    : "bg-transparent py-4"
+            )}
         >
-            <Container>
-                <BNavbar.Brand href="#home" className={`d-flex align-items-center ${scrolled ? 'text-primary' : 'text-white'}`}>
-                    <i className="bi bi-house-heart-fill me-2 fs-4"></i>
-                    <span className="brand-logo fs-3">StayMate</span>
-                </BNavbar.Brand>
-                <BNavbar.Toggle aria-controls="landing-navbar-nav" />
-                <BNavbar.Collapse id="landing-navbar-nav">
-                    <Nav className="ms-auto align-items-center">
-                        <Nav.Link href="#home" className={`px-3 fw-medium ${scrolled ? 'text-dark' : 'text-white'}`}>Home</Nav.Link>
-                        <Nav.Link href="#features" className={`px-3 fw-medium ${scrolled ? 'text-dark' : 'text-white'}`}>Features</Nav.Link>
-                        <Nav.Link href="#about" className={`px-3 fw-medium ${scrolled ? 'text-dark' : 'text-white'}`}>About</Nav.Link>
-                        <Nav.Link href="#contact" className={`px-3 fw-medium ${scrolled ? 'text-dark' : 'text-white'}`}>Contact</Nav.Link>
-                        <div className="ms-3 d-flex gap-2">
-                            <Button variant={scrolled ? "outline-primary" : "outline-light"} className="rounded-pill px-4" size="sm">
-                                Login
+            <div className="container mx-auto px-4 flex items-center justify-between">
+                {/* Brand */}
+                <Link
+                    to="/"
+                    className={cn(
+                        "flex items-center gap-2 transition-colors no-underline",
+                        scrolled ? "text-primary" : "text-white"
+                    )}
+                >
+                    <Home className="w-6 h-6" />
+                    <span className="text-2xl font-extrabold tracking-tight">StayMate</span>
+                </Link>
+
+                {/* Desktop Nav */}
+                <div className="hidden lg:flex items-center gap-8">
+                    <div className="flex items-center gap-6">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.name}
+                                to={link.href}
+                                className={cn(
+                                    "text-sm font-medium transition-colors hover:text-primary no-underline",
+                                    scrolled ? "text-slate-600" : "text-white/90"
+                                )}
+                            >
+                                {link.name}
+                            </Link>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            className={cn(
+                                "rounded-full px-6",
+                                !scrolled && "border-white text-white hover:bg-white hover:text-primary bg-transparent"
+                            )}
+                            size="sm"
+                            asChild
+                        >
+                            <Link to="/login">Login</Link>
+                        </Button>
+                        <Button
+                            variant={scrolled ? "default" : "secondary"}
+                            className="rounded-full px-6"
+                            size="sm"
+                            asChild
+                        >
+                            <Link to="/signup">Get Started</Link>
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Mobile Nav */}
+                <div className="lg:hidden">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn(scrolled ? "text-slate-900" : "text-white")}
+                            >
+                                <Menu className="w-6 h-6" />
                             </Button>
-                            <Button variant={scrolled ? "primary" : "light"} className={`rounded-pill px-4 ${!scrolled && 'text-primary fw-bold'}`} size="sm">
-                                Get Started
-                            </Button>
-                        </div>
-                    </Nav>
-                </BNavbar.Collapse>
-            </Container>
-        </BNavbar>
+                        </SheetTrigger>
+                        <SheetContent side="right">
+                            <SheetHeader>
+                                <SheetTitle className="text-left flex items-center gap-2">
+                                    <Home className="w-5 h-5 text-primary" />
+                                    <span>StayMate</span>
+                                </SheetTitle>
+                            </SheetHeader>
+                            <div className="flex flex-col gap-4 mt-8">
+                                {navLinks.map((link) => (
+                                    <Link
+                                        key={link.name}
+                                        to={link.href}
+                                        className="text-lg font-medium text-slate-600 hover:text-primary transition-colors no-underline"
+                                    >
+                                        {link.name}
+                                    </Link>
+                                ))}
+                                <hr className="my-2" />
+                                <div className="flex flex-col gap-3">
+                                    <Button variant="outline" className="w-full rounded-full" asChild>
+                                        <Link to="/login">Login</Link>
+                                    </Button>
+                                    <Button className="w-full rounded-full" asChild>
+                                        <Link to="/signup">Get Started</Link>
+                                    </Button>
+                                </div>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
+            </div>
+        </nav>
     );
 }

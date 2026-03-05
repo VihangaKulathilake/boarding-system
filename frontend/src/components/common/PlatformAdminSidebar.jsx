@@ -1,0 +1,43 @@
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { BarChart3, Building2, Users, ChevronRight } from "lucide-react";
+
+const links = [
+  { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
+  { name: "Landlords", href: "/admin/landlords", icon: Building2 },
+  { name: "Tenants", href: "/admin/tenants", icon: Users },
+];
+
+export default function PlatformAdminSidebar() {
+  const location = useLocation();
+
+  return (
+    <aside className="hidden lg:flex w-64 bg-white border-r border-slate-100 flex-col">
+      <div className="h-16 px-6 flex items-center border-b border-slate-50">
+        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Platform Controls</span>
+      </div>
+      <div className="p-4 space-y-2">
+        {links.map((item) => {
+          const active = location.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "flex items-center justify-between rounded-xl px-4 py-3 no-underline transition-colors",
+                active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              )}
+            >
+              <span className="inline-flex items-center gap-3 font-bold">
+                <item.icon className="w-5 h-5" />
+                {item.name}
+              </span>
+              <ChevronRight className={cn("w-4 h-4", active ? "opacity-100" : "opacity-30")} />
+            </Link>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}

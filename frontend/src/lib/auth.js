@@ -32,6 +32,7 @@ export const getCurrentUser = () => {
 export const isAuthenticated = () => Boolean(getAuthToken() && getCurrentUser());
 
 export const getDefaultRouteByRole = (role) => {
+  if (role === "admin") return "/admin/dashboard";
   if (role === "landlord") return "/dashboard";
   if (role === "tenant") return "/client-home";
   return "/login";

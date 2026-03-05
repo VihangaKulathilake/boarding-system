@@ -18,6 +18,9 @@ import Maintenance from '../pages/client/Maintenance';
 import Profile from '../pages/client/Profile';
 import NotFound from '../NotFound';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminLandlords from '../pages/admin/AdminLandlords';
+import AdminTenants from '../pages/admin/AdminTenants';
 
 export default function AppRoutes() {
     return (
@@ -50,6 +53,13 @@ export default function AppRoutes() {
 
             <Route element={<ProtectedRoute allowedRoles={["tenant", "landlord"]} />}>
                 <Route path="/payments" element={<Payments />} />
+            </Route>
+
+            {/* Platform Admin Routes */}
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/landlords" element={<AdminLandlords />} />
+                <Route path="/admin/tenants" element={<AdminTenants />} />
             </Route>
 
             {/* Fallback */}

@@ -18,3 +18,11 @@ export const loginUser = async (userData) => {
     throw toApiError(error, "Login failed.");
   }
 };
+
+export const logoutUser = async () => {
+  try {
+    await axiosInstance.post("/auth/logout");
+  } catch (error) {
+    throw toApiError(error, "Logout failed.");
+  }
+};

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const boardingSchema = new mongoose.Schema(
   {
-    title: {
+    boardingName: {
       type: String,
       required: true,
       trim: true,
@@ -21,6 +21,18 @@ const boardingSchema = new mongoose.Schema(
     city: {
       type: String,
       required: true,
+    },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true,
+      },
     },
 
     price: {

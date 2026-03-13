@@ -3,7 +3,8 @@ import Boarding from "../models/boarding.js";
 import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
 import { normalizeStringArray } from "../utils/stringHelpers.js";
 
-export const registerBoarding = async (req, res) => {
+// Create a new boarding
+export const createBoarding = async (req, res) => {
   try {
     const {
       title,
@@ -70,16 +71,19 @@ export const registerBoarding = async (req, res) => {
   }
 };
 
-export const createBoarding = registerBoarding;
-
+// Get all boardings with optional filters
 export const getBoardings = async (req, res) => {
   try {
+
+    // Extract query parameters for filtering
     const { q, city, minPrice, maxPrice, rooms, status, owner, mine } = req.query;
 
+    // Build the filter object based on provided query parameters
     const filter = {};
 
     if (q) {
       filter.$or = [
+        // Use regex for case-insensitive partial matching in title, description, address, and city
         { title: { $regex: q, $options: "i" } },
         { description: { $regex: q, $options: "i" } },
         { address: { $regex: q, $options: "i" } },
@@ -93,6 +97,8 @@ export const getBoardings = async (req, res) => {
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
+
+      // isNaN check is important to avoid adding invalid price filters that would exclude all results
       if (minPrice !== undefined && !Number.isNaN(Number(minPrice))) {
         filter.price.$gte = Number(minPrice);
       }
@@ -108,22 +114,27 @@ export const getBoardings = async (req, res) => {
       filter.rooms = Number(rooms);
     }
 
+    // Filter by status - only admins can filter by specific status, regular users only see approved boardings
     if (status) {
       if (isAdmin(req.user)) {
         filter.status = status;
       } else {
         filter.status = "approved";
       }
-    } else if (!isAdmin(req.user)) {
+    }
+    // If no status filter is provided, regular users should only see approved boardings
+    else if (!isAdmin(req.user)) {
       filter.status = "approved";
     }
 
+    // If mine=true, filter by current user's boardings. Otherwise, if owner is provided, filter by that owner.
     if (mine === "true" && req.user?.id) {
       filter.owner = req.user.id;
     } else if (owner && mongoose.Types.ObjectId.isValid(owner)) {
       filter.owner = owner;
     }
 
+    // Fetch boardings based on the constructed filter, populate owner details, and sort by creation date
     const boardings = await Boarding.find(filter)
       .populate("owner", "name email role")
       .sort({ createdAt: -1 });
@@ -134,6 +145,7 @@ export const getBoardings = async (req, res) => {
   }
 };
 
+// Get a single boarding by id
 export const getBoardingById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -158,6 +170,7 @@ export const getBoardingById = async (req, res) => {
   }
 };
 
+// Update a boarding by id
 export const updateBoarding = async (req, res) => {
   try {
     const { id } = req.params;
@@ -218,6 +231,7 @@ export const updateBoarding = async (req, res) => {
   }
 };
 
+// Delete a boarding by id
 export const deleteBoarding = async (req, res) => {
   try {
     const { id } = req.params;

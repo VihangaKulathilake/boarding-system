@@ -1,6 +1,7 @@
 import axiosInstance from "./axios";
 import { toApiError } from "./errors";
 
+// API functions for user authentication: register, login, and logout
 export const registerUser = async (userData) => {
   try {
     const response = await axiosInstance.post("/auth/register", userData);

@@ -1,6 +1,7 @@
 import axiosInstance from "./axios";
 import { toApiError } from "./errors";
 
+// API functions for managing users: fetch all users, fetch by ID, fetch by role, get current user, update, delete, and search
 const USERS_BASE = "/users";
 
 export const getUsers = async (params = {}) => {

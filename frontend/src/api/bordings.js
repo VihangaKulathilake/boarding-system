@@ -1,6 +1,7 @@
 import axiosInstance from "./axios";
 import { toApiError } from "./errors";
 
+// API functions for managing boardings: create, read, update, delete, search, and filter
 const BOARDINGS_BASE = "/boardings";
 
 const assertBoardingId = (boardingId) => {

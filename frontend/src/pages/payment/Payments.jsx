@@ -1,101 +1,236 @@
 import React from "react";
-import { Download, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
+import { motion } from "framer-motion";
+import { 
+  Download, 
+  CheckCircle2, 
+  Clock3, 
+  AlertTriangle, 
+  TrendingUp, 
+  CreditCard, 
+  ArrowUpRight, 
+  Filter, 
+  Search,
+  MoreVertical,
+  ChevronRight,
+  Wallet
+} from "lucide-react";
 import AdminNavbar from "@/components/common/AdminNavbar";
 import Sidebar from "@/components/common/Sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const payments = [
-  { id: "INV-2231", unit: "Palm Residency - A-201", period: "Mar 2026", amount: "Rs. 45,000", method: "Bank", status: "Paid" },
-  { id: "INV-2232", unit: "City Nest - B-112", period: "Mar 2026", amount: "Rs. 40,000", method: "Card", status: "Pending" },
-  { id: "INV-2233", unit: "Lake View Annex - C-302", period: "Mar 2026", amount: "Rs. 38,500", method: "Cash", status: "Paid" },
+  { id: "INV-2231", unit: "Palm Residency - A-201", period: "Mar 2026", amount: "Rs. 45,000", method: "Bank Transfer", status: "Paid", date: "Mar 12, 2026" },
+  { id: "INV-2232", unit: "City Nest - B-112", period: "Mar 2026", amount: "Rs. 40,000", method: "Card Payment", status: "Pending", date: "Mar 10, 2026" },
+  { id: "INV-2233", unit: "Lake View Annex - C-302", period: "Mar 2026", amount: "Rs. 38,500", method: "Cash Deposit", status: "Paid", date: "Mar 08, 2026" },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
 
 export default function Payments() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f8fafc] font-sans">
       <AdminNavbar />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6 lg:p-10 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] font-black text-slate-400">My Collections</p>
-              <h1 className="text-4xl font-black tracking-tight text-slate-900 mt-2">Payments</h1>
-            </div>
-            <Button className="rounded-xl font-bold w-fit">
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
-          </div>
-
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="rounded-2xl border border-emerald-200 bg-emerald-50 shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-widest font-black text-emerald-700">Collected</p>
-                <h3 className="text-2xl font-black text-emerald-900 mt-1">Rs. 540,000</h3>
-              </CardContent>
-            </Card>
-            <Card className="rounded-2xl border border-amber-200 bg-amber-50 shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-widest font-black text-amber-700">Pending</p>
-                <h3 className="text-2xl font-black text-amber-900 mt-1">Rs. 125,000</h3>
-              </CardContent>
-            </Card>
-            <Card className="rounded-2xl border border-rose-200 bg-rose-50 shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-widest font-black text-rose-700">Overdue</p>
-                <h3 className="text-2xl font-black text-rose-900 mt-1">Rs. 24,000</h3>
-              </CardContent>
-            </Card>
-          </section>
-
-          <Card className="rounded-2xl border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl font-black tracking-tight">Property Invoices</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {payments.map((item) => (
-                <div key={item.id} className="rounded-xl border border-slate-100 p-5 bg-white">
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                    <div>
-                      <p className="text-lg font-black text-slate-900">{item.unit}</p>
-                      <p className="text-xs uppercase tracking-wider font-black text-slate-400 mt-1">
-                        {item.id} - {item.period}
-                      </p>
-                      <p className="text-sm text-slate-600 font-medium mt-2">{item.method}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <p className="font-black text-slate-900">{item.amount}</p>
-                      <Badge
-                        className={
-                          item.status === "Paid"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
-                        }
-                      >
-                        {item.status === "Paid" ? (
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                        ) : (
-                          <Clock3 className="w-3 h-3 mr-1" />
-                        )}
-                        {item.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700 inline-flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  Detailed account-level payment history is available in the admin console.
-                </p>
+        <main className="flex-1 p-6 lg:p-12 space-y-12">
+          {/* Header */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col md:flex-row md:items-end justify-between gap-8"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-emerald-600 font-bold uppercase tracking-[0.2em] text-[10px]">
+                <Wallet className="w-3 h-3" />
+                Revenue Operations
               </div>
+              <h1 className="text-5xl font-black tracking-tight text-slate-900 mt-2">Financial <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">Overview</span></h1>
+              <p className="text-slate-500 font-medium max-w-lg">
+                Monitor your collection velocity, manage multi-property invoices, and export fiscal reporting.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+               <div className="relative group hidden sm:block">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                  <Input placeholder="Search invoices..." className="h-12 pl-12 pr-4 rounded-2xl border-none bg-white shadow-lg shadow-slate-200/50 w-64 font-bold" />
+               </div>
+               <Button className="h-12 px-6 rounded-2xl bg-slate-900 text-white font-black shadow-xl hover:shadow-emerald-200 transition-all active:scale-95">
+                  <Download className="w-5 h-5 mr-3" /> Export Ledger
+               </Button>
+            </div>
+          </motion.div>
+
+          {/* Revenue Cards */}
+          <motion.section 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {[
+              { label: "Total Collected", val: "Rs. 540,000", growth: "+12.4%", icon: CheckCircle2, bg: "bg-emerald-50", text: "text-emerald-600" },
+              { label: "Pending Funds", val: "Rs. 125,000", growth: "-2.1%", icon: Clock3, bg: "bg-amber-50", text: "text-amber-600" },
+              { label: "Overdue Leases", val: "Rs. 24,000", growth: "+0.4%", icon: AlertTriangle, bg: "bg-rose-50", text: "text-rose-600" },
+            ].map((stat, i) => (
+              <motion.div key={i} variants={itemVariants}>
+                <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 bg-white p-8 group hover:shadow-2xl transition-all duration-500">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.text} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <stat.icon className="w-6 h-6" />
+                    </div>
+                    <Badge className={`${stat.bg} ${stat.text} border-none font-black text-[10px] rounded-lg`}>{stat.growth}</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stat.val}</h3>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.section>
+
+          {/* Transaction Ledger */}
+          <Card className="rounded-[3rem] border-0 shadow-2xl shadow-slate-200/50 bg-white overflow-hidden">
+            <CardHeader className="p-10 pb-6 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-3xl font-black text-slate-900 tracking-tight">Recent Invoices</CardTitle>
+                <CardDescription className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Audit-ready transaction history across assets</CardDescription>
+              </div>
+              <Button variant="ghost" className="rounded-xl flex items-center gap-2 text-slate-400 font-bold">
+                 <Filter className="w-4 h-4" /> Filter <ChevronDown className="w-3 h-3" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 px-10 pb-10">
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-4"
+              >
+                {payments.map((item) => (
+                  <motion.div key={item.id} variants={itemVariants}>
+                    <div className="rounded-3xl border border-slate-50 p-6 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-slate-50/30 group hover:bg-white hover:shadow-xl transition-all duration-500 cursor-pointer">
+                       <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
+                             <CreditCard className="w-6 h-6" />
+                          </div>
+                          <div>
+                             <h4 className="font-black text-slate-900 text-lg leading-tight uppercase tracking-tight">{item.unit}</h4>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">REF: {item.id} • {item.date}</p>
+                          </div>
+                       </div>
+                       
+                       <div className="flex flex-wrap items-center gap-10 border-t xl:border-t-0 pt-6 xl:pt-0">
+                          <div className="space-y-1 min-w-[120px]">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Settle Method</p>
+                             <p className="font-bold text-slate-700">{item.method}</p>
+                          </div>
+                          <div className="space-y-1 min-w-[120px]">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gross Amount</p>
+                             <p className="font-black text-slate-900 text-lg">{item.amount}</p>
+                          </div>
+                          <div className="min-w-[100px]">
+                             <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-3 py-1 border-none uppercase ${item.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {item.status}
+                             </Badge>
+                          </div>
+                          <Button size="icon" className="h-10 w-10 rounded-xl bg-white text-slate-200 group-hover:text-slate-900 shadow-sm ml-auto">
+                             <MoreVertical className="w-5 h-5" />
+                          </Button>
+                       </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+              
+              <motion.div 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                className="mt-8 rounded-3xl bg-slate-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-6"
+              >
+                <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-amber-500">
+                      <AlertTriangle className="w-5 h-5" />
+                   </div>
+                   <p className="text-sm font-bold text-slate-600">Detailed account-level ledger history is optimized in the Admin Console.</p>
+                </div>
+                <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 text-slate-900 font-bold whitespace-nowrap">
+                   Platform Audit Report
+                </Button>
+              </motion.div>
             </CardContent>
           </Card>
+
+          {/* Collection Health Widget */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="rounded-[3rem] bg-slate-900 p-12 text-white flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden"
+          >
+             <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/20 rounded-full blur-3xl -mr-40 -mt-40"></div>
+             <div className="space-y-6 relative z-10 max-w-md">
+                <div className="flex items-center gap-3">
+                   <TrendingUp className="w-6 h-6 text-emerald-400" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">Asset Efficiency</span>
+                </div>
+                <h3 className="text-4xl font-black tracking-tight leading-none">Yield Optimization</h3>
+                <p className="text-slate-400 font-medium text-lg leading-relaxed">
+                   Your current collection velocity is <span className="text-white font-bold">82%</span>. Automation of overdue triggers can improve this by roughly <span className="text-emerald-400 font-bold">14.2%</span>.
+                </p>
+             </div>
+             <div className="w-full lg:w-auto bg-white/5 backdrop-blur-md p-10 rounded-[2.5rem] border border-white/5 relative z-10">
+                <div className="space-y-8">
+                   <div className="flex items-center justify-between gap-20">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Benchmark</span>
+                      <span className="text-2xl font-black">95.0%</span>
+                   </div>
+                   <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 w-[82%]"></div>
+                   </div>
+                   <Button className="w-full h-14 rounded-2xl bg-white text-slate-900 font-black hover:bg-slate-100 shadow-2xl group flex items-center justify-center gap-3">
+                      Optimize Collection Flow <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                   </Button>
+                </div>
+             </div>
+          </motion.div>
         </main>
       </div>
     </div>
   );
+}
+
+function ChevronDown(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
 }

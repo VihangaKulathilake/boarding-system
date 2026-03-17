@@ -35,14 +35,26 @@ const boardingSchema = new mongoose.Schema(
       },
     },
 
-    price: {
-      type: Number,
+    type: {
+      type: String,
+      enum: ["room_based", "full_property"],
       required: true,
     },
 
-    rooms: {
+    price: {
       type: Number,
-      required: true,
+      required: function () {
+        return this.type === "full_property";
+      },
+      min: 0,
+    },
+
+    totalRooms: {
+      type: Number,
+      min: 1,
+      required: function () {
+        return this.type === "full_property";
+      },
     },
 
     facilities: [

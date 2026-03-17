@@ -5,7 +5,7 @@ import {
   getBoardingById,
   getBoardings,
   updateBoarding,
-} from "../controllers/bordingController.js";
+} from "../controllers/boardingController.js";
 import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();

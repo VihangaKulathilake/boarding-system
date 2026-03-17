@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { createBoarding } from "@/api/boardings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ImageUpload from "@/components/common/ImageUpload";
 
 export default function AddBoarding() {
   const navigate = useNavigate();
@@ -16,14 +17,17 @@ export default function AddBoarding() {
   const [form, setForm] = useState({
     boardingName: "",
     address: "",
+    city: "",
     type: "room_based",
     totalRooms: "",
     price: "",
     description: "",
+    images: [],
   });
 
   const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const onSelectChange = (val) => setForm(p => ({ ...p, type: val }));
+  const onImageUpload = (imageUrls) => setForm(p => ({ ...p, images: imageUrls }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -55,9 +59,15 @@ export default function AddBoarding() {
                   <Label htmlFor="boardingName">Boarding Name</Label>
                   <Input id="boardingName" name="boardingName" value={form.boardingName} onChange={onChange} required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address / Location</Label>
-                  <Input id="address" name="address" value={form.address} onChange={onChange} required />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address / Location</Label>
+                    <Input id="address" name="address" value={form.address} onChange={onChange} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input id="city" name="city" value={form.city} onChange={onChange} required />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Listing Type</Label>
@@ -84,6 +94,10 @@ export default function AddBoarding() {
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" rows={5} value={form.description} onChange={onChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Boarding Images</Label>
+                  <ImageUpload onUploadComplete={onImageUpload} />
                 </div>
                  <div className="flex gap-2 pt-2">
                   <Button type="submit" disabled={loading} className="rounded-xl font-bold">

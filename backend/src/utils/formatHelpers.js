@@ -1,5 +1,5 @@
 // Normalize input that can be either a comma-separated string or an array into an array of trimmed strings
-const normalizeStringArray = (value) => {
+export const normalizeStringArray = (value) => {
 
     // Convert undefined or null to undefined to indicate no value
   if (value === undefined || value === null) return undefined;

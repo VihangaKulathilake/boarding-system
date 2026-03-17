@@ -5,6 +5,8 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import boardingRoutes from "./routes/boardingRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -15,6 +17,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/boardings", boardingRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running");

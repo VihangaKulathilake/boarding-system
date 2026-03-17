@@ -7,23 +7,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { getBoardingById, updateBoarding } from "@/api/boardings";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function EditBoarding() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [form, setForm] = useState({
-    name: "Palm Residency",
-    location: "Nugegoda",
-    totalRooms: "20",
-    rent: "45000",
-    description: "Modern boarding with wifi, laundry and parking.",
+    boardingName: "",
+    address: "",
+    type: "room_based",
+    totalRooms: "",
+    price: "",
+    description: "",
   });
 
-  const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  const onSubmit = (e) => {
-    e.preventDefault();
-    navigate("/boardings");
+  React.useEffect(() => {
+    fetchBoarding();
+  }, [id]);
+
+  const fetchBoarding = async () => {
+    try {
+      setFetchLoading(true);
+      const data = await getBoardingById(id);
+      setForm({
+        boardingName: data.boardingName,
+        address: data.address,
+        type: data.type,
+        totalRooms: data.totalRooms?.toString(),
+        price: data.price?.toString(),
+        description: data.description,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setFetchLoading(false);
+    }
   };
+
+  const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const onSelectChange = (val) => setForm(p => ({ ...p, type: val }));
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await updateBoarding(id, form);
+      navigate("/boardings");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update boarding");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetchLoading) return <div className="p-12 text-center text-slate-400 font-black">Loading property details for audit...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -39,12 +80,24 @@ export default function EditBoarding() {
             <CardContent>
               <form className="space-y-5" onSubmit={onSubmit}>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Boarding Name</Label>
-                  <Input id="name" name="name" value={form.name} onChange={onChange} required />
+                  <Label htmlFor="boardingName">Boarding Name</Label>
+                  <Input id="boardingName" name="boardingName" value={form.boardingName} onChange={onChange} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input id="location" name="location" value={form.location} onChange={onChange} required />
+                  <Label htmlFor="address">Address / Location</Label>
+                  <Input id="address" name="address" value={form.address} onChange={onChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Listing Type</Label>
+                  <Select value={form.type} onValueChange={onSelectChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="room_based">Room Based (Individual Rents)</SelectItem>
+                      <SelectItem value="full_property">Full Property (Single Unit)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -52,16 +105,18 @@ export default function EditBoarding() {
                     <Input id="totalRooms" name="totalRooms" type="number" min="1" value={form.totalRooms} onChange={onChange} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="rent">Monthly Rent (LKR)</Label>
-                    <Input id="rent" name="rent" type="number" min="0" value={form.rent} onChange={onChange} required />
+                    <Label htmlFor="price">Monthly Rent / Base Price (LKR)</Label>
+                    <Input id="price" name="price" type="number" min="0" value={form.price} onChange={onChange} required={form.type === 'full_property'} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" rows={5} value={form.description} onChange={onChange} />
                 </div>
-                <div className="flex gap-2 pt-2">
-                  <Button type="submit" className="rounded-xl font-bold">Save Changes</Button>
+                 <div className="flex gap-2 pt-2">
+                  <Button type="submit" disabled={loading} className="rounded-xl font-bold">
+                    {loading ? "Saving Changes..." : "Save Changes"}
+                  </Button>
                   <Button type="button" variant="outline" onClick={() => navigate("/boardings")} className="rounded-xl">Cancel</Button>
                 </div>
               </form>

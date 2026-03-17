@@ -77,3 +77,12 @@ export const filterBoardings = async (filters = {}) => {
     throw toApiError(error, "Failed to filter boardings.");
   }
 };
+
+export const getAdminStats = async () => {
+  try {
+    const { data } = await axiosInstance.get(`${BOARDINGS_BASE}/admin/stats`);
+    return data;
+  } catch (error) {
+    throw toApiError(error, "Failed to fetch admin statistics.");
+  }
+};

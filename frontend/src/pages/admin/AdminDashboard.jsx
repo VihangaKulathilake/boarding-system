@@ -32,6 +32,8 @@ import PlatformAdminSidebar from "@/components/common/PlatformAdminSidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getUsers } from "@/api/users";
+import { getAdminStats } from "@/api/boardings";
 
 const growthData = [
   { name: "Mon", users: 120, boardings: 45 },
@@ -68,6 +70,33 @@ const staggerContainer = {
 };
 
 export default function AdminDashboard() {
+  const [stats, setStats] = React.useState({ landlords: 0, tenants: 0, revenue: 0, recentUsers: [] });
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const [users, adminStats] = await Promise.all([
+        getUsers(),
+        getAdminStats(),
+      ]);
+      setStats({
+        landlords: adminStats.landlords,
+        tenants: adminStats.tenants,
+        revenue: adminStats.revenue,
+        recentUsers: users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3)
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
       <PlatformAdminNavbar />
@@ -111,10 +140,10 @@ export default function AdminDashboard() {
             className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8"
           >
             {[
-              { label: "Total Users", val: "2,184", icon: Users, tone: "text-blue-600 bg-blue-50", growth: "+14.2%" },
-              { label: "Landlords", val: "186", icon: Building2, tone: "text-violet-600 bg-violet-50", growth: "+5.1%" },
-              { label: "Verifications", val: "742", icon: BadgeCheck, tone: "text-emerald-600 bg-emerald-50", growth: "+22.8%" },
-              { label: "Risks", val: "17", icon: AlertTriangle, tone: "text-rose-600 bg-rose-50", growth: "-2.4%" },
+              { label: "Active Landlords", val: stats.landlords.toString().padStart(2, '0'), sub: "Verified Partners", icon: Wallet, tone: "text-orange-600 bg-orange-50", growth: "+14.2%" },
+              { label: "Platform Residents", val: stats.tenants.toString().padStart(2, '0'), sub: "Active Users", icon: Users, tone: "text-indigo-600 bg-indigo-50", growth: "+22.8%" },
+              { label: "Global Revenue", val: `Rs. ${(stats.revenue / 1000).toFixed(0)}k`, sub: "Platform Vol", icon: BarChart3, tone: "text-emerald-600 bg-emerald-50", growth: "+8.5%" },
+              { label: "System Health", val: "99%", sub: "Service Status", icon: ShieldCheck, tone: "text-blue-600 bg-blue-50", growth: "Stable" },
             ].map((stat, i) => (
               <motion.div key={i} variants={fadeIn}>
                 <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 overflow-hidden bg-white hover:shadow-2xl transition-all duration-500 group relative">

@@ -4,7 +4,7 @@ import {
     deleteBooking,
     getBookingById,
     getBookings,
-    updateBooking,
+    updateBookingStatus,
 } from "../controllers/bookingController.js";
 import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 
@@ -18,7 +18,7 @@ router
 router
     .route("/:id")
     .get(getBookingById)
-    .put(protect, authorizeRoles("admin", "landlord"), updateBooking)
+    .put(protect, authorizeRoles("admin", "landlord"), updateBookingStatus)
     .delete(protect, authorizeRoles("admin", "landlord"), deleteBooking);
 
 export default router;

@@ -5,7 +5,8 @@ import {
     Users,
     Banknote,
     ChevronRight,
-    Headset
+    Headset,
+    Wallet
 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { cn } from "@/lib/utils";
@@ -15,7 +16,7 @@ export default function Sidebar() {
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "Boardings", href: "/boardings", icon: Building2 },
         { name: "Tenants", href: "/tenants", icon: Users },
-        { name: "Payments", href: "/payments", icon: Banknote },
+        { name: "Payments", href: "/payments", icon: Wallet },
     ];
 
     return (

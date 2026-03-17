@@ -1,46 +1,64 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  Download, 
-  CheckCircle2, 
-  Clock3, 
-  AlertTriangle, 
-  TrendingUp, 
-  CreditCard, 
-  ArrowUpRight, 
-  Filter, 
+import {
+  Download,
+  CheckCircle2,
+  Clock3,
+  AlertTriangle,
+  TrendingUp,
+  CreditCard,
+  ArrowUpRight,
+  Filter,
   Search,
   MoreVertical,
   ChevronRight,
   Wallet
 } from "lucide-react";
-import AdminNavbar from "@/components/common/AdminNavbar";
-import Sidebar from "@/components/common/Sidebar";
+import { getPayments, updatePaymentStatus } from "@/api/payments";
+import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-const payments = [
-  { id: "INV-2231", unit: "Palm Residency - A-201", period: "Mar 2026", amount: "Rs. 45,000", method: "Bank Transfer", status: "Paid", date: "Mar 12, 2026" },
-  { id: "INV-2232", unit: "City Nest - B-112", period: "Mar 2026", amount: "Rs. 40,000", method: "Card Payment", status: "Pending", date: "Mar 10, 2026" },
-  { id: "INV-2233", unit: "Lake View Annex - C-302", period: "Mar 2026", amount: "Rs. 38,500", method: "Cash Deposit", status: "Paid", date: "Mar 08, 2026" },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-};
+import AdminNavbar from "@/components/common/AdminNavbar";
+import Sidebar from "@/components/common/Sidebar";
 
 export default function Payments() {
+  const [paymentsList, setPaymentsList] = React.useState([]);
+  const [summary, setSummary] = React.useState({ collected: 0, pending: 0, overdue: 0 });
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const data = await getPayments();
+      setPaymentsList(data);
+
+      const collected = data.filter(p => p.status === 'completed').reduce((acc, p) => acc + (p.amount || 0), 0);
+      const pending = data.filter(p => p.status === 'pending').reduce((acc, p) => acc + (p.amount || 0), 0);
+
+      setSummary({ collected, pending, overdue: 0 });
+    } catch (err) {
+      setError(err.message || "Failed to load payments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (id, newStatus) => {
+    try {
+      await updatePaymentStatus(id, newStatus);
+      fetchPayments(); // Refresh list
+    } catch (err) {
+      alert("Failed to update status");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
       <AdminNavbar />
@@ -48,7 +66,7 @@ export default function Payments() {
         <Sidebar />
         <main className="flex-1 p-6 lg:p-12 space-y-12">
           {/* Header */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col md:flex-row md:items-end justify-between gap-8"
@@ -63,20 +81,20 @@ export default function Payments() {
                 Monitor your collection velocity, manage multi-property invoices, and export fiscal reporting.
               </p>
             </div>
-            
+
             <div className="flex items-center gap-4">
-               <div className="relative group hidden sm:block">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
-                  <Input placeholder="Search invoices..." className="h-12 pl-12 pr-4 rounded-2xl border-none bg-white shadow-lg shadow-slate-200/50 w-64 font-bold" />
-               </div>
-               <Button className="h-12 px-6 rounded-2xl bg-slate-900 text-white font-black shadow-xl hover:shadow-emerald-200 transition-all active:scale-95">
-                  <Download className="w-5 h-5 mr-3" /> Export Ledger
-               </Button>
+              <div className="relative group hidden sm:block">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                <Input placeholder="Search invoices..." className="h-12 pl-12 pr-4 rounded-2xl border-none bg-white shadow-lg shadow-slate-200/50 w-64 font-bold" />
+              </div>
+              <Button className="h-12 px-6 rounded-2xl bg-slate-900 text-white font-black shadow-xl hover:shadow-emerald-200 transition-all active:scale-95">
+                <Download className="w-5 h-5 mr-3" /> Export Ledger
+              </Button>
             </div>
           </motion.div>
 
           {/* Revenue Cards */}
-          <motion.section 
+          <motion.section
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -84,9 +102,9 @@ export default function Payments() {
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {[
-              { label: "Total Collected", val: "Rs. 540,000", growth: "+12.4%", icon: CheckCircle2, bg: "bg-emerald-50", text: "text-emerald-600" },
-              { label: "Pending Funds", val: "Rs. 125,000", growth: "-2.1%", icon: Clock3, bg: "bg-amber-50", text: "text-amber-600" },
-              { label: "Overdue Leases", val: "Rs. 24,000", growth: "+0.4%", icon: AlertTriangle, bg: "bg-rose-50", text: "text-rose-600" },
+              { label: "Total Collected", val: `Rs. ${summary.collected.toLocaleString()}`, growth: "+12.4%", icon: CheckCircle2, bg: "bg-emerald-50", text: "text-emerald-600" },
+              { label: "Pending Funds", val: `Rs. ${summary.pending.toLocaleString()}`, growth: "Review Required", icon: Clock3, bg: "bg-amber-50", text: "text-amber-600" },
+              { label: "Overdue Leases", val: "Rs. 0", growth: "Safe", icon: AlertTriangle, bg: "bg-slate-50", text: "text-slate-400" },
             ].map((stat, i) => (
               <motion.div key={i} variants={itemVariants}>
                 <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 bg-white p-8 group hover:shadow-2xl transition-all duration-500">
@@ -113,102 +131,110 @@ export default function Payments() {
                 <CardDescription className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Audit-ready transaction history across assets</CardDescription>
               </div>
               <Button variant="ghost" className="rounded-xl flex items-center gap-2 text-slate-400 font-bold">
-                 <Filter className="w-4 h-4" /> Filter <ChevronDown className="w-3 h-3" />
+                <Filter className="w-4 h-4" /> Filter <ChevronDown className="w-3 h-3" />
               </Button>
             </CardHeader>
             <CardContent className="p-0 px-10 pb-10">
-              <motion.div 
+              <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
                 className="space-y-4"
               >
-                {payments.map((item) => (
-                  <motion.div key={item.id} variants={itemVariants}>
+                {loading && <p className="text-center p-12 text-slate-400 font-bold">Sequencing ledger data...</p>}
+                {error && <p className="text-center p-12 text-rose-500 font-bold">{error}</p>}
+                {!loading && !error && paymentsList.length === 0 && <p className="text-center p-12 text-slate-400 font-bold">No transactions recorded.</p>}
+
+                {paymentsList.map((item) => (
+                  <motion.div key={item._id} variants={itemVariants}>
                     <div className="rounded-3xl border border-slate-50 p-6 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-slate-50/30 group hover:bg-white hover:shadow-xl transition-all duration-500 cursor-pointer">
-                       <div className="flex items-center gap-6">
-                          <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
-                             <CreditCard className="w-6 h-6" />
-                          </div>
-                          <div>
-                             <h4 className="font-black text-slate-900 text-lg leading-tight uppercase tracking-tight">{item.unit}</h4>
-                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">REF: {item.id} • {item.date}</p>
-                          </div>
-                       </div>
-                       
-                       <div className="flex flex-wrap items-center gap-10 border-t xl:border-t-0 pt-6 xl:pt-0">
-                          <div className="space-y-1 min-w-[120px]">
-                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Settle Method</p>
-                             <p className="font-bold text-slate-700">{item.method}</p>
-                          </div>
-                          <div className="space-y-1 min-w-[120px]">
-                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gross Amount</p>
-                             <p className="font-black text-slate-900 text-lg">{item.amount}</p>
-                          </div>
-                          <div className="min-w-[100px]">
-                             <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-3 py-1 border-none uppercase ${item.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                {item.status}
-                             </Badge>
-                          </div>
-                          <Button size="icon" className="h-10 w-10 rounded-xl bg-white text-slate-200 group-hover:text-slate-900 shadow-sm ml-auto">
-                             <MoreVertical className="w-5 h-5" />
-                          </Button>
-                       </div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
+                          <CreditCard className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-slate-900 text-lg leading-tight uppercase tracking-tight">
+                            {item.boarding?.boardingName || "Property Payment"}
+                          </h4>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                            REF: {item.transactionId || item._id.substring(0, 8)} • {format(new Date(item.createdAt), "MMM dd, yyyy")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-10 border-t xl:border-t-0 pt-6 xl:pt-0">
+                        <div className="space-y-1 min-w-[120px]">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Settle Method</p>
+                          <p className="font-bold text-slate-700">Digital Record</p>
+                        </div>
+                        <div className="space-y-1 min-w-[120px]">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gross Amount</p>
+                          <p className="font-black text-slate-900 text-lg">Rs. {item.amount?.toLocaleString()}</p>
+                        </div>
+                        <div className="min-w-[100px]">
+                          <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-3 py-1 border-none uppercase ${item.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : item.status === 'failed' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {item.status}
+                          </Badge>
+                        </div>
+                        <Button size="icon" className="h-10 w-10 rounded-xl bg-white text-slate-200 group-hover:text-slate-900 shadow-sm ml-auto">
+                          <MoreVertical className="w-5 h-5" />
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 className="mt-8 rounded-3xl bg-slate-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-6"
               >
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-amber-500">
-                      <AlertTriangle className="w-5 h-5" />
-                   </div>
-                   <p className="text-sm font-bold text-slate-600">Detailed account-level ledger history is optimized in the Admin Console.</p>
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-amber-500">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-600">Detailed account-level ledger history is optimized in the Admin Console.</p>
                 </div>
                 <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 text-slate-900 font-bold whitespace-nowrap">
-                   Platform Audit Report
+                  Platform Audit Report
                 </Button>
               </motion.div>
             </CardContent>
           </Card>
 
           {/* Collection Health Widget */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             className="rounded-[3rem] bg-slate-900 p-12 text-white flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden"
           >
-             <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/20 rounded-full blur-3xl -mr-40 -mt-40"></div>
-             <div className="space-y-6 relative z-10 max-w-md">
-                <div className="flex items-center gap-3">
-                   <TrendingUp className="w-6 h-6 text-emerald-400" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">Asset Efficiency</span>
+            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/20 rounded-full blur-3xl -mr-40 -mt-40"></div>
+            <div className="space-y-6 relative z-10 max-w-md">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-6 h-6 text-emerald-400" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Asset Efficiency</span>
+              </div>
+              <h3 className="text-4xl font-black tracking-tight leading-none">Yield Optimization</h3>
+              <p className="text-slate-400 font-medium text-lg leading-relaxed">
+                Your current collection velocity is <span className="text-white font-bold">82%</span>. Automation of overdue triggers can improve this by roughly <span className="text-emerald-400 font-bold">14.2%</span>.
+              </p>
+            </div>
+            <div className="w-full lg:w-auto bg-white/5 backdrop-blur-md p-10 rounded-[2.5rem] border border-white/5 relative z-10">
+              <div className="space-y-8">
+                <div className="flex items-center justify-between gap-20">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Benchmark</span>
+                  <span className="text-2xl font-black">95.0%</span>
                 </div>
-                <h3 className="text-4xl font-black tracking-tight leading-none">Yield Optimization</h3>
-                <p className="text-slate-400 font-medium text-lg leading-relaxed">
-                   Your current collection velocity is <span className="text-white font-bold">82%</span>. Automation of overdue triggers can improve this by roughly <span className="text-emerald-400 font-bold">14.2%</span>.
-                </p>
-             </div>
-             <div className="w-full lg:w-auto bg-white/5 backdrop-blur-md p-10 rounded-[2.5rem] border border-white/5 relative z-10">
-                <div className="space-y-8">
-                   <div className="flex items-center justify-between gap-20">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Benchmark</span>
-                      <span className="text-2xl font-black">95.0%</span>
-                   </div>
-                   <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 w-[82%]"></div>
-                   </div>
-                   <Button className="w-full h-14 rounded-2xl bg-white text-slate-900 font-black hover:bg-slate-100 shadow-2xl group flex items-center justify-center gap-3">
-                      Optimize Collection Flow <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                   </Button>
+                <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 w-[82%]"></div>
                 </div>
-             </div>
+                <Button className="w-full h-14 rounded-2xl bg-white text-slate-900 font-black hover:bg-slate-100 shadow-2xl group flex items-center justify-center gap-3">
+                  Optimize Collection Flow <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </div>
           </motion.div>
         </main>
       </div>

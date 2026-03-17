@@ -21,29 +21,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getBookings } from "@/api/bookings";
+import { format } from "date-fns";
 
-const bookings = [
-    {
-        id: "BK-7821",
-        title: "Sunset Villa, Room 302",
-        location: "123 Palm Ave, Colombo",
-        status: "Active",
-        startDate: "Jan 15, 2024",
-        expiryDate: "Jan 15, 2025",
-        price: 35000,
-        image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "BK-9012",
-        title: "Urban Loft",
-        location: "Galle Face, Colombo",
-        status: "Pending",
-        startDate: "Mar 01, 2024",
-        expiryDate: "Mar 01, 2025",
-        price: 45000,
-        image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=300&auto=format&fit=crop&q=60"
-    }
-];
+
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -56,6 +37,25 @@ const itemVariants = {
 };
 
 export default function MyBookings() {
+    const [bookingsList, setBookingsList] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        fetchBookings();
+    }, []);
+
+    const fetchBookings = async () => {
+        try {
+            setLoading(true);
+            const data = await getBookings();
+            setBookingsList(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
@@ -99,16 +99,17 @@ export default function MyBookings() {
                                 animate="visible"
                                 className="space-y-6"
                             >
-                                {bookings.filter(b => b.status === "Active").map((booking) => (
-                                    <motion.div key={booking.id} variants={itemVariants}>
+                                {loading && <p className="text-center p-12 text-slate-400 font-bold">Sequencing active stay data...</p>}
+                                {!loading && bookingsList.filter(b => b.status === "approved").map((booking) => (
+                                    <motion.div key={booking._id} variants={itemVariants}>
                                         <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2.5rem] hover:shadow-2xl transition-all duration-500 group">
                                             <CardContent className="p-0">
                                                 <div className="flex flex-col lg:flex-row">
                                                     <div className="lg:w-80 h-64 lg:h-auto overflow-hidden relative">
-                                                        <img src={booking.image} alt={booking.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                        <img src={booking.boarding?.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} alt={booking.boarding?.boardingName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                         <div className="absolute top-6 left-6">
                                                             <Badge className="bg-emerald-500 text-white border-none font-black px-3 py-1 text-[10px] uppercase tracking-widest shadow-lg">
-                                                                {booking.status}
+                                                                {booking.status.toUpperCase()}
                                                             </Badge>
                                                         </div>
                                                     </div>
@@ -120,10 +121,10 @@ export default function MyBookings() {
                                                                     <ArrowUpRight className="w-5 h-5" />
                                                                 </Button>
                                                             </div>
-                                                            <h3 className="text-3xl font-black text-slate-900 mb-2 leading-tight group-hover:text-primary transition-colors">{booking.title}</h3>
+                                                            <h3 className="text-3xl font-black text-slate-900 mb-2 leading-tight group-hover:text-primary transition-colors">{booking.boarding?.boardingName} {booking.room ? `- Room ${booking.room.roomNumber}` : ""}</h3>
                                                             <div className="flex items-center gap-2 text-slate-400 font-bold mb-8">
                                                                 <MapPin className="w-4 h-4 text-primary" />
-                                                                {booking.location}
+                                                                {booking.boarding?.address || "Location Hidden"}
                                                             </div>
 
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
@@ -131,14 +132,14 @@ export default function MyBookings() {
                                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Lease Period</p>
                                                                     <div className="flex items-center gap-3 font-black text-slate-700">
                                                                         <Calendar className="w-4 h-4 text-primary" />
-                                                                        {booking.startDate} - {booking.expiryDate}
+                                                                        {format(new Date(booking.checkInDate), "MMM dd, yyyy")} (For {booking.durationMonths} Months)
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
                                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Monthly Rent</p>
                                                                     <div className="flex items-center gap-3 font-black text-slate-700">
                                                                         <CreditCard className="w-4 h-4 text-emerald-500" />
-                                                                        Rs. {booking.price.toLocaleString()}
+                                                                        Rs. {(booking.payment?.amount / booking.durationMonths || 0).toLocaleString()}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -171,20 +172,21 @@ export default function MyBookings() {
                                 animate="visible"
                                 className="space-y-4"
                             >
-                                {bookings.filter(b => b.status === "Pending").map((booking) => (
-                                    <motion.div key={booking.id} variants={itemVariants}>
+                                {loading && <p className="text-center p-12 text-slate-400 font-bold">Scanning pending requests...</p>}
+                                {!loading && bookingsList.filter(b => b.status === "pending").map((booking) => (
+                                    <motion.div key={booking._id} variants={itemVariants}>
                                         <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2rem] opacity-90 hover:opacity-100 transition-all hover:shadow-xl duration-500">
                                             <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8">
                                                 <div className="w-24 h-24 rounded-[1.5rem] overflow-hidden shrink-0 shadow-inner">
-                                                    <img src={booking.image} className="w-full h-full object-cover" />
+                                                    <img src={booking.boarding?.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} className="w-full h-full object-cover" />
                                                 </div>
                                                 <div className="flex-grow text-center md:text-left">
                                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-                                                        <h3 className="text-2xl font-black text-slate-900">{booking.title}</h3>
+                                                        <h3 className="text-2xl font-black text-slate-900">{booking.boarding?.boardingName}</h3>
                                                         <Badge className="bg-amber-100 text-amber-600 border-none font-black text-[10px] uppercase tracking-widest px-3">Reviewing Application</Badge>
                                                     </div>
                                                     <p className="text-slate-400 font-bold flex items-center justify-center md:justify-start gap-2">
-                                                        <MapPin className="w-4 h-4 text-primary" /> {booking.location}
+                                                        <MapPin className="w-4 h-4 text-primary" /> {booking.boarding?.address || "Location Hidden"}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-3 w-full md:w-auto">

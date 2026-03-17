@@ -21,12 +21,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { getBoardings } from "@/api/boardings";
+import { getBookings } from "@/api/bookings";
 
-const tenantOps = [
-  { property: "Palm Residency", location: "Nugegoda", occupied: "18/20", newRequests: 2, maintenance: 3, due: 1, tone: "indigo" },
-  { property: "City Nest", location: "Maharagama", occupied: "15/15", newRequests: 0, maintenance: 2, due: 2, tone: "emerald" },
-  { property: "Lake View Annex", location: "Kandy", occupied: "10/12", newRequests: 1, maintenance: 1, due: 0, tone: "amber" },
-];
+
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -44,6 +42,50 @@ const staggerContainer = {
 };
 
 export default function Tenants() {
+  const [opsData, setOpsData] = React.useState([]);
+  const [summary, setSummary] = React.useState({ pending: 0, maintenance: 0, issues: 0 });
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetchOpsData();
+  }, []);
+
+  const fetchOpsData = async () => {
+    try {
+      setLoading(true);
+      const [boardings, bookings] = await Promise.all([
+        getBoardings(),
+        getBookings()
+      ]);
+
+      const data = boardings.map(b => {
+        const bBookings = bookings.filter(book => book.boarding?._id === b._id);
+        const pending = bBookings.filter(book => book.status === 'pending').length;
+        return {
+          _id: b._id,
+          property: b.boardingName,
+          location: b.address,
+          occupied: `${b.occupiedRows || 0}/${b.totalRooms || 0}`,
+          newRequests: pending,
+          maintenance: 0, // Mock
+          due: 0 // Mock
+        };
+      });
+
+      setOpsData(data);
+      setSummary({
+        pending: bookings.filter(b => b.status === 'pending').length,
+        maintenance: 0,
+        issues: 0
+      });
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
       <AdminNavbar />
@@ -88,9 +130,9 @@ export default function Tenants() {
             className="grid lg:grid-cols-3 gap-8"
           >
             {[
-              { label: "Pending Requests", count: 3, sub: "Entrance screening", icon: Mail, bg: "bg-indigo-50", text: "text-indigo-600" },
-              { label: "Maintenance Tickets", count: 6, sub: "Open work orders", icon: Wrench, bg: "bg-amber-50", text: "text-amber-600" },
-              { label: "Payment Issues", count: 3, sub: "Outstanding balances", icon: AlertTriangle, bg: "bg-rose-50", text: "text-rose-600" },
+              { label: "Pending Requests", count: summary.pending, sub: "Entrance screening", icon: Mail, bg: "bg-indigo-50", text: "text-indigo-600" },
+              { label: "Maintenance Tickets", count: summary.maintenance, sub: "Open work orders", icon: Wrench, bg: "bg-amber-50", text: "text-amber-600" },
+              { label: "Payment Issues", count: summary.issues, sub: "Outstanding balances", icon: AlertTriangle, bg: "bg-rose-50", text: "text-rose-600" },
             ].map((action, i) => (
               <motion.div key={i} variants={fadeIn}>
                 <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 bg-white p-6 group hover:shadow-2xl transition-all duration-500 cursor-pointer">
@@ -116,9 +158,10 @@ export default function Tenants() {
 
           {/* Property Control Boards */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {tenantOps.map((property, idx) => (
+            {loading && <p className="text-center p-12 text-slate-400 font-bold col-span-full">Sequencing community lifecycle data...</p>}
+            {!loading && opsData.map((property, idx) => (
               <motion.div 
-                key={idx} 
+                key={property._id} 
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -131,7 +174,7 @@ export default function Tenants() {
                           <div className="flex items-center gap-2">
                              <h3 className="text-3xl font-black text-slate-900 tracking-tight">{property.property}</h3>
                              <Badge className="bg-slate-100 text-slate-500 border-none font-black text-[10px] uppercase tracking-widest px-3">
-                                {property.location}
+                                {property.location || 'Asset Location Restricted'}
                              </Badge>
                           </div>
                           <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Operations HUB</p>

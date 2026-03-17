@@ -18,16 +18,14 @@ import {
 } from "lucide-react";
 import AdminNavbar from "@/components/common/AdminNavbar";
 import Sidebar from "@/components/common/Sidebar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { getBoardings } from "@/api/boardings";
 
-const properties = [
-  { id: "b001", name: "Palm Residency", location: "Nugegoda, Colombo", rooms: 20, occupied: 18, status: "Active", image: "https://images.unsplash.com/photo-1555854817-5b2260d50c63?w=800&auto=format&fit=crop&q=60" },
-  { id: "b002", name: "City Nest", location: "Maharagama, Colombo", rooms: 15, occupied: 15, status: "Full", image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=60" },
-  { id: "b003", name: "Lake View Annex", location: "Kandy Central", rooms: 12, occupied: 10, status: "Active", image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=60" },
-];
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,10 +43,28 @@ const cardVariants = {
 export default function Boardings() {
   const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
+  const [boardingsList, setBoardingsList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredProperties = properties.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.location.toLowerCase().includes(searchTerm.toLowerCase())
+  React.useEffect(() => {
+    fetchBoardings();
+  }, []);
+
+  const fetchBoardings = async () => {
+    try {
+      setLoading(true);
+      const data = await getBoardings();
+      setBoardingsList(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredProperties = boardingsList.filter(p => 
+    p.boardingName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.address?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -115,18 +131,19 @@ export default function Boardings() {
                 exit={{ opacity: 0, y: 10 }}
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
               >
-                {filteredProperties.map((p) => (
-                  <motion.div key={p.id} variants={cardVariants} className="group">
+                {loading && <p className="text-center p-12 text-slate-400 font-bold col-span-full">Retrieving asset data...</p>}
+                {!loading && filteredProperties.map((p) => (
+                  <motion.div key={p._id} variants={cardVariants} className="group">
                     <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 overflow-hidden bg-white hover:shadow-2xl transition-all duration-500 flex flex-col h-full border-b-8 border-transparent hover:border-indigo-600">
                       <div className="relative h-64 overflow-hidden">
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <img src={p.image || "https://images.unsplash.com/photo-1555854817-5b2260d50c63?w=800&auto=format&fit=crop&q=60"} alt={p.boardingName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
-                           <Badge className={`w-fit font-black rounded-lg px-3 py-1 text-[10px] uppercase tracking-widest ${p.status === 'Full' ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}`}>
-                             {p.status}
+                           <Badge className={`w-fit font-black rounded-lg px-3 py-1 text-[10px] uppercase tracking-widest ${p.totalRooms === p.occupiedRows ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                             {p.totalRooms === p.occupiedRows ? 'Full' : 'Active'}
                            </Badge>
-                           <h3 className="text-2xl font-black text-white mt-2 leading-none">{p.name}</h3>
+                           <h3 className="text-2xl font-black text-white mt-2 leading-none">{p.boardingName}</h3>
                            <p className="text-slate-300 text-xs font-bold mt-2 flex items-center gap-1">
-                             <MapPin className="w-3 h-3" /> {p.location}
+                             <MapPin className="w-3 h-3" /> {p.address}
                            </p>
                         </div>
                       </div>
@@ -136,14 +153,14 @@ export default function Boardings() {
                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Inventory</p>
                               <div className="flex items-center gap-2">
                                 <BedDouble className="w-4 h-4 text-indigo-600" />
-                                <span className="text-lg font-black text-slate-900">{p.rooms} Rooms</span>
+                               <span className="text-lg font-black text-slate-900">{p.totalRooms || 0} Units</span>
                               </div>
                            </div>
                            <div className="p-4 rounded-2xl bg-slate-50 space-y-1">
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Occupancy</p>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</p>
                               <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-emerald-600" />
-                                <span className="text-lg font-black text-slate-900">{Math.round((p.occupied/p.rooms)*100)}%</span>
+                                <span className="text-lg font-black text-slate-900">{p.type === 'room_based' ? 'Room-Based' : 'Full Prop'}</span>
                               </div>
                            </div>
                         </div>
@@ -155,13 +172,13 @@ export default function Boardings() {
                                   <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white ring-2 ring-slate-50"></div>
                                 ))}
                              </div>
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">+{p.occupied} Tenants</span>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">+{p.occupiedRows} Tenants</span>
                           </div>
-                          <Link to={`/boardings/edit/${p.id}`} className="no-underline">
+                           <Link to={`/boardings/edit/${p._id}`} className="no-underline">
                              <Button size="icon" className="h-12 w-12 rounded-2xl bg-slate-900 text-white hover:bg-indigo-600 shadow-xl transition-all">
                                 <Pencil className="w-5 h-5" />
                              </Button>
-                          </Link>
+                           </Link>
                         </div>
                       </CardContent>
                     </Card>
@@ -183,18 +200,18 @@ export default function Boardings() {
                         <div className="p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-8">
                            <div className="flex items-center gap-8 w-full lg:w-auto">
                               <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 hidden sm:block">
-                                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <img src={p.image || "https://images.unsplash.com/photo-1555854817-5b2260d50c63?w=800&auto=format&fit=crop&q=60"} alt={p.boardingName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                               </div>
                               <div className="space-y-2">
                                  <div className="flex items-center gap-3">
-                                   <h3 className="text-xl font-black text-slate-900">{p.name}</h3>
-                                   <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-2 py-0 border-none uppercase ${p.status === 'Full' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                      {p.status}
+                                   <h3 className="text-xl font-black text-slate-900">{p.boardingName}</h3>
+                                   <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-2 py-0 border-none uppercase ${p.totalRooms === p.occupiedRows ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                      {p.totalRooms === p.occupiedRows ? 'Full' : 'Active'}
                                    </Badge>
                                  </div>
                                  <div className="flex items-center gap-4 text-sm font-bold text-slate-400">
-                                   <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-indigo-500" /> {p.location}</span>
-                                   <span className="flex items-center gap-1"><BedDouble className="w-3.5 h-3.5 text-blue-500" /> {p.rooms} units</span>
+                                   <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-indigo-500" /> {p.address}</span>
+                                   <span className="flex items-center gap-1"><BedDouble className="w-3.5 h-3.5 text-blue-500" /> {p.totalRooms} units</span>
                                  </div>
                               </div>
                            </div>

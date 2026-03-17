@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Boarding from "../models/boarding.js";
 import Room from "../models/room.js";
+import User from "../models/User.js";
+import Payment from "../models/payment.js";
 import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
 import { normalizeStringArray } from "../utils/formatHelpers.js";
 
@@ -87,6 +89,7 @@ export const createBoarding = async (req, res) => {
       boarding: populatedBoarding,
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -201,6 +204,7 @@ export const getBoardings = async (req, res) => {
 
     return res.json(response);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -239,6 +243,7 @@ export const getBoardingById = async (req, res) => {
 
     return res.json(boarding);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -329,6 +334,7 @@ export const updateBoarding = async (req, res) => {
       boarding,
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -355,6 +361,31 @@ export const deleteBoarding = async (req, res) => {
 
     return res.json({ message: "Boarding deleted successfully" });
   } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get platform-wide stats for admin dashboard
+export const getAdminStats = async (req, res) => {
+  try {
+    const [landlordsCount, tenantsCount, boardingsCount, payments] = await Promise.all([
+      User.countDocuments({ role: "landlord" }),
+      User.countDocuments({ role: "tenant" }),
+      Boarding.countDocuments(),
+      Payment.find({ status: "completed" }).select("amount"),
+    ]);
+
+    const totalRevenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+
+    return res.json({
+      landlords: landlordsCount,
+      tenants: tenantsCount,
+      boardings: boardingsCount,
+      revenue: totalRevenue,
+    });
+  } catch (error) {
+    console.error("GET_ADMIN_STATS_ERROR:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

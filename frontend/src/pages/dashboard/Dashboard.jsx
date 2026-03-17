@@ -33,20 +33,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { getBoardings } from "@/api/boardings";
+import { getBookings } from "@/api/bookings";
+import { getPayments } from "@/api/payments";
 
-const revenueData = [
-  { name: "Jan", total: 400000 },
-  { name: "Feb", total: 450000 },
-  { name: "Mar", total: 420000 },
-  { name: "Apr", total: 500000 },
-  { name: "May", total: 540000 },
-  { name: "Jun", total: 580000 },
-];
 
-const occupancyData = [
-  { name: "Occupied", value: 43 },
-  { name: "Vacant", value: 7 },
-];
 
 const COLORS = ["#6366f1", "#e2e8f0"];
 
@@ -66,6 +57,76 @@ const staggerContainer = {
 };
 
 export default function Dashboard() {
+  const [stats, setStats] = React.useState({
+    properties: 0,
+    occupancy: 0,
+    revenue: 0,
+    recentPayments: [],
+    boardings: []
+  });
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [boardings, bookings, payments] = await Promise.all([
+        getBoardings(),
+        getBookings(),
+        getPayments()
+      ]);
+
+      const totalRooms = boardings.reduce((acc, b) => acc + (b.totalRooms || 0), 0);
+      const availableRooms = boardings.reduce((acc, b) => acc + (b.availableRooms || 0), 0);
+      const occupiedRooms = totalRooms - availableRooms;
+      const totalRevenue = payments
+        .filter(p => p.status === 'completed')
+        .reduce((acc, p) => acc + (p.amount || 0), 0);
+
+      setStats({
+        properties: boardings.length,
+        occupancy: totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0,
+        totalRooms,
+        occupiedRooms,
+        availableRooms,
+        revenue: totalRevenue,
+        recentPayments: payments.slice(0, 3),
+        boardings: boardings
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRevenueData = () => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = new Date().getMonth();
+    const last6Months = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthIdx = (currentMonth - i + 12) % 12;
+      last6Months.push({ name: months[monthIdx], total: 0 });
+    }
+
+    stats.recentPayments?.forEach(p => {
+        if (p.status === 'completed') {
+            const date = new Date(p.createdAt);
+            const monthName = months[date.getMonth()];
+            const dataPoint = last6Months.find(d => d.name === monthName);
+            if (dataPoint) dataPoint.total += (p.amount || 0);
+        }
+    });
+
+    return last6Months;
+  };
+
+  const revenueData = getRevenueData();
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans selection:bg-indigo-100 selection:text-indigo-700">
       <AdminNavbar />
@@ -111,10 +172,10 @@ export default function Dashboard() {
             className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6"
           >
             {[
-              { label: "Properties", val: "03", sub: "Live Assets", icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
-              { label: "Occupancy", val: "86%", sub: "43 / 50 Rooms", icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-              { label: "Revenue", val: "Rs. 540k", sub: "+12.5% vs Last Mo", icon: Wallet, color: "text-emerald-600", bg: "bg-emerald-50" },
-              { label: "Support", val: "07", sub: "Pending Tasks", icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
+              { label: "Properties", val: stats.properties.toString().padStart(2, '0'), sub: "Live Assets", icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
+              { label: "Occupancy", val: `${stats.occupancy}%`, sub: `${stats.occupiedRooms} / ${stats.totalRooms} Rooms`, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
+              { label: "Revenue", val: `Rs. ${(stats.revenue / 1000).toFixed(1)}k`, sub: "Total Earnings", icon: Wallet, color: "text-emerald-600", bg: "bg-emerald-50" },
+              { label: "Support", val: "00", sub: "Pending Tasks", icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
             ].map((stat, i) => (
               <motion.div key={i} variants={fadeIn}>
                 <Card className="rounded-[2rem] border-0 shadow-lg shadow-slate-200/50 overflow-hidden bg-white hover:shadow-xl transition-all duration-500 group">
@@ -212,25 +273,28 @@ export default function Dashboard() {
                   <div className="h-[200px] w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie
-                          data={occupancyData}
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={10}
-                          dataKey="value"
-                        >
-                          <Cell stroke="none" fill="#ffffff" />
-                          <Cell stroke="none" fill="rgba(255,255,255,0.2)" />
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-4xl font-black">86%</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Full</span>
+                          <Pie
+                            data={[
+                              { name: "Occupied", value: stats.occupiedRooms },
+                              { name: "Vacant", value: stats.totalRooms - stats.occupiedRooms },
+                            ]}
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={10}
+                            dataKey="value"
+                          >
+                            <Cell stroke="none" fill="#ffffff" />
+                            <Cell stroke="none" fill="rgba(255,255,255,0.2)" />
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-4xl font-black">{stats.occupancy}%</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Full</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-4">
-                    <p className="text-indigo-100 font-medium">You have 7 rooms currently vacant across 3 properties.</p>
+                    <div className="space-y-4">
+                      <p className="text-indigo-100 font-medium">You have {stats.totalRooms - stats.occupiedRooms} units currently vacant across {stats.properties} properties.</p>
                     <Button className="w-full h-12 rounded-2xl bg-white text-indigo-600 hover:bg-slate-50 font-black shadow-lg">
                       View Vacancies
                     </Button>
@@ -257,26 +321,22 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="divide-y divide-slate-50">
-                    {[
-                      { name: "John Doe", property: "Sunset Residency · RM 201", amount: "Rs. 25,000", time: "2h ago", status: "Verified" },
-                      { name: "Sarah Khan", property: "Metro Lodge · RM 105", amount: "Rs. 32,000", time: "5h ago", status: "Verified" },
-                      { name: "Alex Wong", property: "Urban Annex · RM 302", amount: "Rs. 28,500", time: "Yesterday", status: "Pending" },
-                    ].map((tx, i) => (
+                    {stats.recentPayments.map((tx, i) => (
                       <div key={i} className="px-8 py-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all cursor-default text-lg font-black text-slate-400">
-                             {tx.name[0]}
+                             {tx.user?.name?.[0] || 'T'}
                           </div>
                           <div>
-                            <p className="font-black text-slate-900">{tx.name}</p>
-                            <p className="text-xs font-bold text-slate-400 tracking-tight">{tx.property}</p>
+                            <p className="font-black text-slate-900">{tx.user?.name || 'Tenant'}</p>
+                            <p className="text-xs font-bold text-slate-400 tracking-tight">{tx.boarding?.boardingName || 'Asset'}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-slate-900">{tx.amount}</p>
+                          <p className="font-black text-slate-900">Rs. {tx.amount?.toLocaleString()}</p>
                           <div className="flex items-center justify-end gap-1.5 mt-1">
-                            <span className="text-[10px] font-bold text-slate-400">{tx.time}</span>
-                            <div className={`w-1.5 h-1.5 rounded-full ${tx.status === 'Verified' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                            <span className="text-[10px] font-bold text-slate-400">Recent</span>
+                            <div className={`w-1.5 h-1.5 rounded-full ${tx.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
                           </div>
                         </div>
                       </div>
@@ -300,17 +360,13 @@ export default function Dashboard() {
                        Optimize your portfolio. Check real-time occupancy rates and manage tenant leases effectively.
                     </p>
                     <div className="space-y-6 pt-4">
-                       {[
-                         { name: "Sunset Residency", val: 92 },
-                         { name: "Metro Lodge", val: 84 },
-                         { name: "Urban Annex", val: 78 }
-                       ].map((p, i) => (
+                       {stats.boardings.slice(0, 3).map((p, i) => (
                          <div key={i} className="space-y-3">
                             <div className="flex justify-between items-end">
-                               <span className="font-black text-slate-700 uppercase tracking-widest text-[10px]">{p.name}</span>
-                               <span className="font-black text-indigo-600">{p.val}%</span>
+                               <span className="font-black text-slate-700 uppercase tracking-widest text-[10px]">{p.boardingName}</span>
+                               <span className="font-black text-indigo-600">{p.totalRooms > 0 ? Math.round((p.occupiedRows / p.totalRooms) * 100) : 0}%</span>
                             </div>
-                            <Progress value={p.val} className="h-3 bg-slate-50" indicatorClassName="bg-gradient-to-r from-indigo-500 to-indigo-600" />
+                            <Progress value={p.totalRooms > 0 ? (p.occupiedRows / p.totalRooms) * 100 : 0} className="h-3 bg-slate-50" indicatorClassName="bg-gradient-to-r from-indigo-500 to-indigo-600" />
                          </div>
                        ))}
                     </div>

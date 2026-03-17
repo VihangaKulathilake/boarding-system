@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getUsers } from "@/api/users";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -28,32 +29,46 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 
-const tenantsData = [
-  { id: "T-8001", name: "Vihanga Kulathilake", email: "vihanga@mail.com", phone: "+94 76 777 1234", verified: true, score: 98, joined: "Jan 12" },
-  { id: "T-8002", name: "Dulani Senevirathne", email: "dulani@mail.com", phone: "+94 71 555 3221", verified: false, score: 45, joined: "Feb 05" },
-  { id: "T-8003", name: "Kasun Wijesinghe", email: "kasun@mail.com", phone: "+94 77 888 4566", verified: true, score: 92, joined: "Mar 01" },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-};
-
 export default function AdminTenants() {
+  const [tenantsList, setTenantsList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredTenants = tenantsData.filter(t => 
-    t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.email.toLowerCase().includes(searchTerm.toLowerCase())
+  React.useEffect(() => {
+    fetchTenants();
+  }, []);
+
+  const fetchTenants = async () => {
+    try {
+      setLoading(true);
+      const data = await getUsers();
+      setTenantsList(data.filter(u => u.role === 'tenant'));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredTenants = tenantsList.filter(t => 
+    t.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
@@ -121,14 +136,15 @@ export default function AdminTenants() {
             animate="visible"
             className="space-y-6"
           >
-            {filteredTenants.map((tenant) => (
-              <motion.div key={tenant.id} variants={itemVariants}>
+            {loading && <p className="text-center p-12 text-slate-400 font-bold">Scanning tenant signatures...</p>}
+            {!loading && filteredTenants.map((tenant) => (
+              <motion.div key={tenant._id} variants={itemVariants}>
                 <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 bg-white group hover:shadow-2xl transition-all duration-500 overflow-hidden border-b-8 border-transparent hover:border-indigo-600">
                   <div className="p-8 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
                      <div className="flex items-center gap-8 flex-1">
                         <div className="relative group">
                            <div className="w-20 h-20 rounded-[1.75rem] border-4 border-slate-100 bg-slate-50 flex items-center justify-center text-3xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                              {tenant.name[0]}
+                              {tenant.name?.[0] || "?"}
                            </div>
                            {tenant.verified && (
                              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 border-4 border-white flex items-center justify-center text-white shadow-lg">
@@ -146,7 +162,7 @@ export default function AdminTenants() {
                            <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-slate-400">
                               <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-indigo-400" /> {tenant.email}</span>
                               <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-violet-400" /> {tenant.phone}</span>
-                              <span className="flex items-center gap-1.5 font-black text-[10px] uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md">REF: {tenant.id}</span>
+                               <span className="flex items-center gap-1.5 font-black text-[10px] uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md">REF: {tenant._id.substring(0, 8)}</span>
                            </div>
                         </div>
                      </div>

@@ -23,6 +23,10 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Link } from 'react-router-dom';
+import { getCurrentUser } from '@/api/users';
+import { getBookings } from '@/api/bookings';
+import { getPayments } from '@/api/payments';
+import { format } from 'date-fns';
 
 const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -35,35 +39,50 @@ const staggerContainer = {
 };
 
 export default function ClientHome() {
-    const activities = [
-        {
-            id: 1,
-            title: "Rent Payment Successful",
-            subtitle: "Transaction ID: #TRX-98765",
-            time: "2 days ago",
-            icon: Check,
-            bgColor: "bg-emerald-100",
-            textColor: "text-emerald-600"
-        },
-        {
-            id: 2,
-            title: "New Message from Landlord",
-            subtitle: "Regarding upcoming maintenance...",
-            time: "Yesterday",
-            icon: MessageSquare,
-            bgColor: "bg-amber-100",
-            textColor: "text-amber-600"
-        },
-        {
-            id: 3,
-            title: "Lease Renewed",
-            subtitle: "Valid until Dec 2026",
-            time: "1 week ago",
-            icon: CheckCircle2,
-            bgColor: "bg-blue-100",
-            textColor: "text-blue-600"
+    const [stats, setStats] = React.useState({
+        user: null,
+        activeBooking: null,
+        activities: [],
+        loading: true
+    });
+
+    React.useEffect(() => {
+        fetchClientData();
+    }, []);
+
+    const fetchClientData = async () => {
+        try {
+            const [user, bookings, payments] = await Promise.all([
+                getCurrentUser(),
+                getBookings(),
+                getPayments()
+            ]);
+
+            const activeBooking = bookings.find(b => b.status === "approved" || b.status === "pending");
+            
+            const activities = payments.slice(0, 3).map(p => ({
+                id: p._id,
+                title: `Payment ${p.status === 'completed' ? 'Successful' : 'Initiated'}`,
+                subtitle: `Amount: Rs. ${p.amount.toLocaleString()}`,
+                time: format(new Date(p.createdAt), "MMM d, yyyy"),
+                icon: Check,
+                bgColor: "bg-emerald-100",
+                textColor: "text-emerald-600"
+            }));
+
+            setStats({
+                user,
+                activeBooking,
+                activities: activities.length > 0 ? activities : [
+                    { id: 1, title: "No Transactions Yet", subtitle: "Your activity will appear here", time: "Now", icon: MessageSquare, bgColor: "bg-slate-100", textColor: "text-slate-400" }
+                ],
+                loading: false
+            });
+        } catch (error) {
+            console.error(error);
+            setStats(prev => ({ ...prev, loading: false }));
         }
-    ];
+    };
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
@@ -77,8 +96,8 @@ export default function ClientHome() {
                     className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
                 >
                     <div className="space-y-2">
-                        <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">Welcome, Alex! 👋</h1>
-                        <p className="text-slate-500 font-bold text-xl">Your property management overview for today.</p>
+                        <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">Welcome, {stats.user?.name || 'User'}! 👋</h1>
+                        <p className="text-slate-500 font-bold text-xl">{stats.user?.role === 'tenant' ? 'Your property management overview for today.' : 'Ready to find your next home?'}</p>
                     </div>
                     <div className="flex items-center gap-3 text-slate-400 font-black text-xs uppercase tracking-widest bg-white px-6 py-3 rounded-[1.5rem] shadow-sm border border-slate-50">
                         <Calendar className="w-4 h-4 text-primary" />
@@ -94,9 +113,9 @@ export default function ClientHome() {
                     className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
                 >
                     {[
-                        { label: "Current Stay", val: "Room 302", sub: "Active Lease", icon: Home, bg: "bg-blue-50", text: "text-blue-600" },
-                        { label: "Next Payment", val: "Rs. 45,000", sub: "Due in 5 days", icon: Wallet, bg: "bg-amber-50", text: "text-amber-600" },
-                        { label: "Messages", val: "2 New", sub: "From Landlord", icon: MessageSquare, bg: "bg-indigo-50", text: "text-indigo-600" }
+                        { label: "Current Stay", val: stats.activeBooking?.room?.roomNumber || stats.activeBooking?.boarding?.boardingName || "None", sub: stats.activeBooking?.status || "In Search", icon: Home, bg: "bg-blue-50", text: "text-blue-600" },
+                        { label: "Next Payment", val: `Rs. ${stats.activeBooking?.room?.price?.toLocaleString() || stats.activeBooking?.boarding?.price?.toLocaleString() || '0'}`, sub: "Monthly Due", icon: Wallet, bg: "bg-amber-50", text: "text-amber-600" },
+                        { label: "Status", val: stats.activeBooking?.status || "None", sub: "Application State", icon: MessageSquare, bg: "bg-indigo-50", text: "text-indigo-600" }
                     ].map((stat, i) => (
                         <motion.div key={i} variants={fadeIn}>
                             <Card className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden bg-white rounded-[2.5rem]">
@@ -179,7 +198,7 @@ export default function ClientHome() {
                             </CardHeader>
                             <CardContent className="p-0">
                                 <div className="divide-y divide-slate-50">
-                                    {activities.map((activity) => (
+                                    {stats.activities.map((activity) => (
                                         <div key={activity.id} className="p-8 flex items-center gap-6 hover:bg-slate-50 transition-all cursor-pointer group">
                                             <div className={`w-12 h-12 rounded-2xl ${activity.bgColor} ${activity.textColor} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
                                                 <activity.icon className="w-6 h-6" />

@@ -5,10 +5,13 @@ import {
   getBoardingById,
   getBoardings,
   updateBoarding,
+  getAdminStats,
 } from "../controllers/boardingController.js";
 import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+router.get("/admin/stats", protect, authorizeRoles("admin"), getAdminStats);
 
 router
   .route("/")

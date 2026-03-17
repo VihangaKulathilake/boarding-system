@@ -9,53 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from 'react-router-dom';
+import { getBoardings } from "@/api/boardings";
 
-const boardings = [
-    {
-        id: 1,
-        title: "Skyline Studio",
-        location: "Colombo 07",
-        price: 25000,
-        rating: 4.8,
-        reviews: 24,
-        type: "Studio",
-        image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&auto=format&fit=crop&q=60",
-        amenities: ["Wifi", "AC", "Parking"]
-    },
-    {
-        id: 2,
-        title: "Green Hill Boarding",
-        location: "Kandy",
-        price: 15000,
-        rating: 4.5,
-        reviews: 12,
-        type: "Shared",
-        image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&auto=format&fit=crop&q=60",
-        amenities: ["Wifi", "Laundry"]
-    },
-    {
-        id: 3,
-        title: "Urban Loft",
-        location: "Galle Face",
-        price: 45000,
-        rating: 4.9,
-        reviews: 30,
-        type: "Single",
-        image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=500&auto=format&fit=crop&q=60",
-        amenities: ["Wifi", "AC", "Gym", "Security"]
-    },
-    {
-        id: 4,
-        title: "Cozy Corner",
-        location: "Nugegoda",
-        price: 12000,
-        rating: 4.2,
-        reviews: 18,
-        type: "Shared",
-        image: "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=500&auto=format&fit=crop&q=60",
-        amenities: ["Wifi", "Parking"]
-    }
-];
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -80,8 +35,27 @@ const itemVariants = {
 };
 
 export default function Marketplace() {
+    const [boardingsList, setBoardingsList] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
+
+    React.useEffect(() => {
+        fetchBoardings();
+    }, []);
+
+    const fetchBoardings = async () => {
+        try {
+            setLoading(true);
+            const data = await getBoardings();
+            setBoardingsList(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
@@ -146,7 +120,7 @@ export default function Marketplace() {
                     transition={{ delay: 0.3 }}
                     className="mb-8"
                 >
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Found {boardings.length} Boardings</h2>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Found {boardingsList.length} Boardings</h2>
                     <p className="text-slate-500 font-medium">Showing curated matches based on your preferences</p>
                 </motion.div>
 
@@ -158,7 +132,8 @@ export default function Marketplace() {
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12"
                 >
                     <AnimatePresence>
-                        {boardings.map((boarding) => (
+                        {loading && <p className="col-span-full text-center p-12 text-slate-400 font-bold italic tracking-widest">Scanning Boarding Infrastructure...</p>}
+                        {!loading && boardingsList.map((boarding) => (
                             <motion.div
                                 key={boarding.id}
                                 variants={itemVariants}
@@ -170,8 +145,8 @@ export default function Marketplace() {
                                     <Card className="border-none shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden rounded-[2rem] bg-white h-full flex flex-col">
                                         <div className="relative aspect-[4/3] overflow-hidden">
                                             <img
-                                                src={boarding.image}
-                                                alt={boarding.title}
+                                                src={boarding.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&auto=format&fit=crop&q=60"}
+                                                alt={boarding.boardingName}
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
                                             <div className="absolute top-4 left-4">
@@ -195,25 +170,25 @@ export default function Marketplace() {
                                             <div className="flex justify-between items-start">
                                                 <div className="space-y-1">
                                                     <CardTitle className="text-xl font-black text-slate-900 leading-tight">
-                                                        {boarding.title}
+                                                        {boarding.boardingName}
                                                     </CardTitle>
                                                     <div className="flex items-center gap-1.5 text-slate-400 font-bold text-sm">
                                                         <MapPin className="w-4 h-4 text-primary" />
-                                                        {boarding.location}
+                                                        {boarding.address || "Location Pending"}
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
                                                     <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-xl">
                                                         <Star className="w-3.5 h-3.5 fill-amber-600" />
-                                                        <span className="text-xs font-black">{boarding.rating}</span>
+                                                        <span className="text-xs font-black">{boarding.rating || "New"}</span>
                                                     </div>
-                                                    <span className="text-[10px] text-slate-400 font-bold">({boarding.reviews})</span>
+                                                    <span className="text-[10px] text-slate-400 font-bold">({boarding.reviews || 0})</span>
                                                 </div>
                                             </div>
                                         </CardHeader>
                                         <CardContent className="p-6 pt-4 flex-grow">
                                             <div className="flex gap-4">
-                                                {boarding.amenities.map(amenity => (
+                                                {boarding.amenities?.map(amenity => (
                                                     <div key={amenity} className="flex flex-col items-center gap-1.5 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
                                                         {amenity === "Wifi" && <Wifi className="w-4 h-4 text-primary" />}
                                                         {amenity === "AC" && <Wind className="w-4 h-4 text-primary" />}
@@ -226,7 +201,7 @@ export default function Marketplace() {
                                         </CardContent>
                                         <CardFooter className="p-6 pt-4 border-t border-slate-50 flex items-center justify-between">
                                             <div className="flex items-baseline gap-1">
-                                                <span className="text-2xl font-black text-slate-900">Rs. {boarding.price.toLocaleString()}</span>
+                                                <span className="text-2xl font-black text-slate-900">Rs. {boarding.price?.toLocaleString() || "View"}</span>
                                                 <span className="text-xs text-slate-400 font-bold uppercase">/mo</span>
                                             </div>
                                             <Button size="lg" className="rounded-2xl font-black px-6 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">

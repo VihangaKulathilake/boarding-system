@@ -26,7 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { getBoardingById } from "@/api/boardings";
 
 const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -39,6 +40,41 @@ const staggerContainer = {
 };
 
 export default function BoardingDetails() {
+    const { id } = useParams();
+    const [boarding, setBoarding] = React.useState(null);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        fetchBoarding();
+    }, [id]);
+
+    const fetchBoarding = async () => {
+        try {
+            setLoading(true);
+            const data = await getBoardingById(id);
+            setBoarding(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="bg-slate-50 min-h-screen font-sans flex flex-col items-center justify-center">
+            <UserNavbar />
+            <p className="text-slate-400 font-black tracking-widest animate-pulse">SYNCHRONIZING ASSET DATA...</p>
+        </div>
+    );
+
+    if (!boarding) return (
+        <div className="bg-slate-50 min-h-screen font-sans flex flex-col items-center justify-center">
+            <UserNavbar />
+            <h2 className="text-2xl font-black text-slate-900">Asset Not Found</h2>
+            <Link to="/marketplace" className="mt-4 text-primary font-bold hover:underline">Return to Search</Link>
+        </div>
+    );
+
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
@@ -74,8 +110,8 @@ export default function BoardingDetails() {
                 >
                     <div className="md:col-span-3 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
                         <img
-                            src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&auto=format&fit=crop&q=80"
-                            alt="Main boarding"
+                            src={boarding.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&auto=format&fit=crop&q=80"}
+                            alt={boarding.boardingName}
                             className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-60"></div>
@@ -117,13 +153,13 @@ export default function BoardingDetails() {
                                 </Badge>
                                 <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
                                     <Star className="w-3.5 h-3.5 fill-amber-600" />
-                                    <span>4.8 (24 Reviews)</span>
+                                    <span>{boarding.rating || "New"} ({boarding.reviews || 0} Reviews)</span>
                                 </div>
                             </div>
-                            <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4">Skyline Luxury Studio</h1>
+                            <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4">{boarding.boardingName}</h1>
                             <div className="flex items-center gap-2 text-slate-500 font-bold text-lg">
                                 <MapPin className="w-6 h-6 text-primary" />
-                                123 Skyview Ave, Colombo 07, Sri Lanka
+                                {boarding.address || "Location Details Restricted"}
                             </div>
                         </motion.div>
 
@@ -133,7 +169,7 @@ export default function BoardingDetails() {
                         <motion.div variants={fadeIn} className="space-y-6">
                             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Experience Premium Living</h3>
                             <p className="text-slate-600 leading-relaxed text-lg">
-                                Experience urban living at its finest in this beautifully designed luxury studio. Located in the heart of Colombo 07, this space offers modern amenities, breathtaking city views, and unparalleled convenience. Perfect for young professionals or university students who value comfort and style.
+                                {boarding.description || "Experience urban living at its finest in this beautifully designed luxury space. Located in the heart of the city, this space offers modern amenities, breathtaking views, and unparalleled convenience."}
                             </p>
                             <Button variant="link" className="p-0 h-auto text-primary font-black uppercase tracking-widest text-xs hover:gap-2 transition-all">
                                 Read full description <ChevronRight className="w-4 h-4 ml-1" />
@@ -147,19 +183,15 @@ export default function BoardingDetails() {
                                 <Badge variant="secondary" className="rounded-xl font-bold px-3">15+ Facilities</Badge>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
-                                {[
-                                    { icon: Wifi, label: "Ultrafast Wifi" },
-                                    { icon: Wind, label: "Central AC" },
-                                    { icon: Car, label: "Secure Parking" },
-                                    { icon: Zap, label: "Laundry Care" },
-                                    { icon: Shield, label: "24/7 Security" },
-                                    { icon: Users, label: "Quiet Zone" }
-                                ].map((item, i) => (
+                                {boarding.amenities?.map((amenity, i) => (
                                     <div key={i} className="flex items-center gap-4 text-slate-700 font-bold group cursor-default">
                                         <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-50 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/5 transition-all group-hover:scale-110 group-hover:shadow-md">
-                                            <item.icon className="w-6 h-6" />
+                                            {amenity === "Wifi" && <Wifi className="w-6 h-6" />}
+                                            {amenity === "AC" && <Wind className="w-6 h-6" />}
+                                            {amenity === "Parking" && <Car className="w-6 h-6" />}
+                                            {!["Wifi", "AC", "Parking"].includes(amenity) && <Zap className="w-6 h-6" />}
                                         </div>
-                                        <span className="text-sm">{item.label}</span>
+                                        <span className="text-sm">{amenity}</span>
                                     </div>
                                 ))}
                             </div>
@@ -205,11 +237,11 @@ export default function BoardingDetails() {
                                 <CardContent className="p-10 space-y-8">
                                     <div className="flex items-end justify-between">
                                         <div className="flex items-end gap-1.5">
-                                            <span className="text-4xl font-black text-slate-900 tracking-tighter">Rs. 25,000</span>
+                                            <span className="text-4xl font-black text-slate-900 tracking-tighter">Rs. {boarding.price?.toLocaleString() || "N/A"}</span>
                                             <span className="text-slate-400 font-bold mb-1.5 uppercase text-xs tracking-widest">/mo</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 text-[10px] font-black tracking-widest uppercase text-amber-600 bg-amber-50 px-3 py-1.5 rounded-xl">
-                                            <Star className="w-3.5 h-3.5 fill-amber-600" /> 4.8
+                                            <Star className="w-3.5 h-3.5 fill-amber-600" /> {boarding.rating || "New"}
                                         </div>
                                     </div>
 
@@ -236,13 +268,16 @@ export default function BoardingDetails() {
                                         </div>
                                         <div className="flex justify-between text-2xl font-black text-slate-900 pt-4">
                                             <span>Subtotal</span>
-                                            <span className="text-primary tracking-tighter">Rs. 76,500</span>
+                                            <span className="text-primary tracking-tighter">Rs. {(boarding.price + 51500)?.toLocaleString() || "Contact Host"}</span>
                                         </div>
                                     </div>
 
-                                    <Button className="w-full h-16 rounded-[1.5rem] text-xl font-black shadow-2xl shadow-primary/30 hover:shadow-primary/40 active:scale-[0.97] transition-all tracking-tight bg-primary">
-                                        Reserve Your Space
-                                    </Button>
+                                    <Button 
+                            onClick={() => alert("Booking request initiated. The landlord will be notified.")}
+                            className="w-full h-14 rounded-[1.25rem] bg-slate-900 text-white font-black shadow-xl hover:shadow-indigo-600/20 transition-all transform active:scale-95 text-lg"
+                          >
+                            Send Booking Request
+                          </Button>
                                     <p className="text-center text-xs text-slate-400 font-bold uppercase tracking-widest">Quick, Secure & Reliable Booking</p>
                                 </CardContent>
                             </Card>

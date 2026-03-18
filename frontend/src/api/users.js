@@ -4,6 +4,33 @@ import { toApiError } from "./errors";
 // API functions for managing users: fetch all users, fetch by ID, fetch by role, get current user, update, delete, and search
 const USERS_BASE = "/users";
 
+export const getMe = async () => {
+  try {
+    const { data } = await axiosInstance.get(`${USERS_BASE}/me`);
+    return data;
+  } catch (error) {
+    throw toApiError(error, "Failed to fetch profile.");
+  }
+};
+
+export const updateMe = async (userData) => {
+  try {
+    const { data } = await axiosInstance.put(`${USERS_BASE}/me`, userData);
+    return data;
+  } catch (error) {
+    throw toApiError(error, "Failed to update profile.");
+  }
+};
+
+export const changePassword = async (passwordData) => {
+  try {
+    const { data } = await axiosInstance.put(`${USERS_BASE}/me/password`, passwordData);
+    return data;
+  } catch (error) {
+    throw toApiError(error, "Failed to change password.");
+  }
+};
+
 export const getUsers = async (params = {}) => {
   try {
     const { data } = await axiosInstance.get(USERS_BASE, { params });

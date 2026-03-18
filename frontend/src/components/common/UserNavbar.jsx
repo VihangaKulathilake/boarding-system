@@ -50,7 +50,7 @@ export default function UserNavbar() {
     ];
 
     return (
-        <nav className="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
+        <nav className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Brand */}
                 <div className="flex items-center gap-8">
@@ -78,14 +78,19 @@ export default function UserNavbar() {
 
                 <div className="flex items-center gap-4">
                     {/* Search Bar */}
-                    <div className="hidden md:flex relative w-64">
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const q = new FormData(e.target).get('q');
+                        if (q) navigate(`/marketplace?q=${encodeURIComponent(q)}`);
+                    }} className="hidden md:flex relative w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
+                            name="q"
                             type="search"
                             placeholder="Search boardings..."
                             className="pl-9 h-9 bg-slate-50 border-slate-200 focus-visible:ring-primary/20 rounded-full"
                         />
-                    </div>
+                    </form>
 
                     {/* User Profile Dropdown */}
                     <DropdownMenu>

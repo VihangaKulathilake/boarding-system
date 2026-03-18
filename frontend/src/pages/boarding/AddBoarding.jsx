@@ -11,6 +11,22 @@ import { createBoarding } from "@/api/boardings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ImageUpload from "@/components/common/ImageUpload";
 import MapPicker from "@/components/common/MapPicker";
+import { Wifi, Wind, Car, Shield, Coffee, Check, BookOpen, Bath, Shirt, Droplets, DoorOpen, Bus, VolumeX } from "lucide-react";
+
+const AVAILABLE_FACILITIES = [
+  { name: "Free WiFi", icon: Wifi },
+  { name: "Study Desks", icon: BookOpen },
+  { name: "Attached Bathroom", icon: Bath },
+  { name: "Kitchen Access", icon: Coffee },
+  { name: "Laundry / Ironing", icon: Shirt },
+  { name: "CCTV / Security", icon: Shield },
+  { name: "Filtered Water", icon: Droplets },
+  { name: "Separate Entrance", icon: DoorOpen },
+  { name: "Near Bus Route", icon: Bus },
+  { name: "Quiet Environment", icon: VolumeX },
+  { name: "Parking Space", icon: Car },
+  { name: "Air Conditioning", icon: Wind },
+];
 
 export default function AddBoarding() {
   const navigate = useNavigate();
@@ -26,12 +42,23 @@ export default function AddBoarding() {
     images: [],
     latitude: "",
     longitude: "",
+    facilities: [],
   });
 
   const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const onSelectChange = (val) => setForm(p => ({ ...p, type: val }));
   const onImageUpload = (imageUrls) => setForm(p => ({ ...p, images: imageUrls }));
   const onLocationSelect = React.useCallback(({ lat, lng }) => setForm(p => ({ ...p, latitude: lat, longitude: lng })), []);
+
+  const toggleFacility = (facilityName) => {
+    setForm(p => {
+      const exists = p.facilities.includes(facilityName);
+      if (exists) {
+        return { ...p, facilities: p.facilities.filter(f => f !== facilityName) };
+      }
+      return { ...p, facilities: [...p.facilities, facilityName] };
+    });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -110,7 +137,33 @@ export default function AddBoarding() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" rows={5} value={form.description} onChange={onChange} />
                 </div>
-                <div className="space-y-2">
+                
+                <div className="space-y-3 pt-2">
+                  <Label className="text-sm font-semibold">Facilities & Amenities</Label>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {AVAILABLE_FACILITIES.map((facility) => {
+                      const Icon = facility.icon;
+                      const isSelected = form.facilities.includes(facility.name);
+                      return (
+                        <div
+                          key={facility.name}
+                          onClick={() => toggleFacility(facility.name)}
+                          className={`flex items-center gap-2.5 p-3 rounded-[1rem] border-2 cursor-pointer transition-all active:scale-95 ${
+                            isSelected 
+                              ? 'bg-indigo-50/50 border-indigo-500 text-indigo-700 shadow-[0_4px_14px_rgba(99,102,241,0.15)]' 
+                              : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-100 hover:bg-slate-50 shadow-sm'
+                          }`}
+                        >
+                          <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
+                          <span className="text-sm font-bold flex-1">{facility.name}</span>
+                          {isSelected && <Check className="w-4 h-4 text-indigo-600" />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
                   <Label>Boarding Images</Label>
                   <ImageUpload onUploadComplete={onImageUpload} />
                 </div>

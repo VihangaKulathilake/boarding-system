@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { getBoardings } from "@/api/boardings";
-import { getValidImageUrl } from "@/lib/images";
+import { getValidImageUrl, onImageError } from "@/lib/images";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -129,7 +129,7 @@ export default function Boardings() {
           <AnimatePresence mode="wait">
             {viewMode === "grid" ? (
               <motion.div
-                key="grid"
+                key={loading ? "grid-loading" : "grid"}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -141,7 +141,7 @@ export default function Boardings() {
                   <motion.div key={p._id} variants={cardVariants} className="group">
                     <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 overflow-hidden bg-white hover:shadow-2xl transition-all duration-500 flex flex-col h-full border-b-8 border-transparent hover:border-indigo-600/30">
                       <div className="relative h-64 overflow-hidden">
-                        <img src={getValidImageUrl(p.images)} alt={p.boardingName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <img src={getValidImageUrl(p.images)} alt={p.boardingName} onError={onImageError} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
                           <Badge className={`w-fit font-black rounded-lg px-3 py-1 text-[10px] uppercase tracking-widest ${p.availableRooms === 0 ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}`}>
                             {p.availableRooms === 0 ? 'Full' : 'Active'}
@@ -214,7 +214,7 @@ export default function Boardings() {
                       <div className="p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-8">
                         <div className="flex items-center gap-8 w-full lg:w-auto">
                           <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 hidden sm:block">
-                            <img src={getValidImageUrl(p.images)} alt={p.boardingName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <img src={getValidImageUrl(p.images)} alt={p.boardingName} onError={onImageError} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">

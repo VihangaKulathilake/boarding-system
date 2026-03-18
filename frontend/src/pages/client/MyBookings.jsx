@@ -1,6 +1,5 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
-import UserFooter from '../../components/common/UserFooter';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calendar,
@@ -218,7 +217,7 @@ export default function MyBookings() {
                 </Tabs>
             </main>
 
-            <UserFooter />
+
         </div>
     );
 }

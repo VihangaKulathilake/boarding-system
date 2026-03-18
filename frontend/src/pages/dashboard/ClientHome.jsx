@@ -1,6 +1,5 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
-import UserFooter from '../../components/common/UserFooter';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -292,7 +291,7 @@ export default function ClientHome() {
                 </div>
             </main>
 
-            <UserFooter />
+
         </div>
     );
 }

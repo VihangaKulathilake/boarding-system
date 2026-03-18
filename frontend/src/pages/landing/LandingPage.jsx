@@ -6,7 +6,6 @@ import FeaturesSection from '../../components/landing/FeaturesSection';
 import HowItWorksSection from '../../components/landing/HowItWorksSection';
 import BenefitsSection from '../../components/landing/BenefitsSection';
 import CTASection from '../../components/landing/CTASection';
-import LandingFooter from '../../components/common/LandingFooter';
 
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +21,7 @@ export default function LandingPage() {
                 <BenefitsSection />
                 <CTASection />
             </main>
-            <LandingFooter />
+
         </div>
     );
 }

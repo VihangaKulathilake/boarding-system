@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck, Users, Building2, BarChart3, LogOut, Menu, Search } from "lucide-react";
+import { ShieldCheck, Users, Building2, BarChart3, LogOut, Menu, Search, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { clearAuthSession } from "@/lib/auth";
+import { clearAuthSession, getCurrentUser } from "@/lib/auth";
 
 const links = [
   { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
@@ -23,6 +23,8 @@ const links = [
 
 export default function PlatformAdminNavbar() {
   const navigate = useNavigate();
+  const authUser = getCurrentUser();
+  const initials = (authUser?.name || 'SA').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const handleLogout = () => {
     clearAuthSession();
@@ -30,11 +32,11 @@ export default function PlatformAdminNavbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950 text-white shadow-sm">
+    <nav className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
-          <Link to="/admin/dashboard" className="inline-flex items-center gap-2 no-underline text-white hover:opacity-90">
-            <ShieldCheck className="w-6 h-6 text-emerald-400" />
+          <Link to="/admin/dashboard" className="inline-flex items-center gap-2 no-underline text-slate-900 hover:opacity-90">
+            <ShieldCheck className="w-6 h-6 text-emerald-500" />
             <span className="font-black tracking-tight text-xl">StayMate Console</span>
           </Link>
           <div className="hidden lg:flex items-center gap-1">
@@ -42,7 +44,7 @@ export default function PlatformAdminNavbar() {
               <Link
                 key={item.name}
                 to={item.href}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold text-slate-200 hover:bg-white/10 no-underline"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 no-underline transition-colors"
               >
                 <item.icon className="w-4 h-4" />
                 {item.name}
@@ -57,20 +59,27 @@ export default function PlatformAdminNavbar() {
             <Input
               type="search"
               placeholder="Search users, properties..."
-              className="pl-9 h-9 rounded-full bg-slate-900 border-slate-700 text-white placeholder:text-slate-400"
+              className="pl-9 h-9 rounded-full bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-primary/20"
             />
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="rounded-full h-9 w-9 p-0 hover:bg-white/10">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-emerald-600 text-white font-bold">SA</AvatarFallback>
+              <Button variant="ghost" className="rounded-full h-9 w-9 p-0 hover:bg-slate-100">
+                <Avatar className="h-9 w-9 border border-slate-200">
+                  <AvatarFallback className="bg-emerald-100 text-emerald-700 font-bold">{initials}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>System Admin</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" asChild>
+                <Link to="/profile" className="no-underline text-inherit flex items-center">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -82,7 +91,7 @@ export default function PlatformAdminNavbar() {
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>

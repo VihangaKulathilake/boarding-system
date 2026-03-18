@@ -1,6 +1,5 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
-import UserFooter from '../../components/common/UserFooter';
 import { motion } from 'framer-motion';
 import {
     Plus,
@@ -221,7 +220,7 @@ export default function Maintenance() {
                 </div>
             </main>
 
-            <UserFooter />
+
         </div>
     );
 }

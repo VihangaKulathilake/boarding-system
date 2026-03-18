@@ -38,7 +38,6 @@ export default function AppRoutes() {
                 <Route path="/boarding/:id" element={<BoardingDetails />} />
                 <Route path="/my-bookings" element={<MyBookings />} />
                 <Route path="/maintenance" element={<Maintenance />} />
-                <Route path="/profile" element={<Profile />} />
             </Route>
 
             {/* Admin/Dashboard Routes */}
@@ -53,6 +52,10 @@ export default function AppRoutes() {
 
             <Route element={<ProtectedRoute allowedRoles={["tenant", "landlord"]} />}>
                 <Route path="/payments" element={<Payments />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["tenant", "landlord", "admin"]} />}>
+                <Route path="/profile" element={<Profile />} />
             </Route>
 
             {/* Platform Admin Routes */}

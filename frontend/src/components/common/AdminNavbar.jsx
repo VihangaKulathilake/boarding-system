@@ -31,10 +31,12 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { clearAuthSession } from "@/lib/auth";
+import { clearAuthSession, getCurrentUser } from "@/lib/auth";
 
 export default function AdminNavbar() {
     const navigate = useNavigate();
+    const authUser = getCurrentUser();
+    const initials = (authUser?.name || 'AD').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
     const handleLogout = () => {
         clearAuthSession();
@@ -49,13 +51,13 @@ export default function AdminNavbar() {
     ];
 
     return (
-        <nav className="sticky top-0 z-40 w-full border-b bg-primary text-primary-foreground shadow-sm">
+        <nav className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Brand */}
                 <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 no-underline text-white">
-                        <Home className="w-6 h-6" />
-                        <span className="text-xl font-bold tracking-tight">StayMate <span className="text-xs font-normal opacity-70 ml-1">Admin</span></span>
+                    <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 no-underline text-slate-900">
+                        <Home className="w-6 h-6 text-primary" />
+                        <span className="text-xl font-bold tracking-tight">StayMate <span className="text-xs font-normal opacity-70 ml-1 text-slate-500">Admin</span></span>
                     </Link>
 
                     {/* Desktop Main Nav */}
@@ -64,7 +66,7 @@ export default function AdminNavbar() {
                             <Link
                                 key={link.name}
                                 to={link.href}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-white/10 transition-colors no-underline text-white/90"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-slate-100 transition-colors no-underline text-slate-600 hover:text-slate-900"
                             >
                                 <link.icon className="w-4 h-4" />
                                 {link.name}
@@ -76,29 +78,31 @@ export default function AdminNavbar() {
                 <div className="flex items-center gap-4">
                     {/* Search Bar */}
                     <div className="hidden md:flex relative w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                             type="search"
                             placeholder="Search records..."
-                            className="pl-9 h-9 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30 rounded-full"
+                            className="pl-9 h-9 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-primary/20 rounded-full"
                         />
                     </div>
 
                     {/* User Profile Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden hover:bg-white/10">
-                                <Avatar className="h-9 w-9 border border-white/20">
-                                    <AvatarFallback className="bg-white/20 text-white">AD</AvatarFallback>
+                            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden hover:bg-slate-100">
+                                <Avatar className="h-9 w-9 border border-slate-200">
+                                    <AvatarFallback className="bg-primary/10 text-primary">{initials}</AvatarFallback>
                                 </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer">
-                                <UserCircle className="mr-2 h-4 w-4" />
-                                <span>Profile</span>
+                            <DropdownMenuItem className="cursor-pointer" asChild>
+                                <Link to="/profile" className="no-underline text-inherit flex items-center">
+                                    <UserCircle className="mr-2 h-4 w-4" />
+                                    <span>Profile</span>
+                                </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">
                                 <Settings className="mr-2 h-4 w-4" />
@@ -116,7 +120,7 @@ export default function AdminNavbar() {
                     <div className="lg:hidden">
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                                <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100">
                                     <Menu className="w-6 h-6" />
                                 </Button>
                             </SheetTrigger>

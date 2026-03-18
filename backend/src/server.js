@@ -15,6 +15,8 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/boardings", boardingRoutes);
 app.use("/api/rooms", roomRoutes);
@@ -24,6 +26,16 @@ app.use("/api/upload", uploadRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running");
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("SERVER_ERROR_CAUGHT:", err);
+  const status = err.status || 500;
+  res.status(status).json({
+    message: err.message || "Internal Server Error",
+    error: err.stack,
+  });
 });
 
 const PORT = process.env.PORT || 5000;

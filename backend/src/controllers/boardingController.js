@@ -19,13 +19,14 @@ export const createBoarding = async (req, res) => {
       totalRooms,
       facilities,
       images,
+      location,
       owner,
       status,
     } = req.body;
 
-    if (!boardingName || !description || !address || !city || !type) {
+    if (!boardingName || !description || !address || !city || !type || !location) {
       return res.status(400).json({
-        message: "boardingName, description, address, city, and type are required",
+        message: "boardingName, description, address, city, type, and location are required",
       });
     }
 
@@ -75,12 +76,32 @@ export const createBoarding = async (req, res) => {
       status: nextStatus,
     };
 
+    if (location && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+      boardingData.location = {
+        type: "Point",
+        coordinates: [Number(location.coordinates[0]), Number(location.coordinates[1])],
+      };
+    } else {
+      return res.status(400).json({ message: "Invalid location coordinates. Latitude and Longitude are required." });
+    }
+
     if (type === "full_property") {
       boardingData.price = parsedPrice;
       boardingData.totalRooms = parsedTotalRooms;
     }
 
-    const boarding = await Boarding.create(boardingData);
+    console.log("CREATING_BOARDING_WITH_DATA:", JSON.stringify(boardingData, null, 2));
+
+    let boarding;
+    try {
+      boarding = await Boarding.create(boardingData);
+    } catch (saveError) {
+      console.error("BOARDING_SAVE_ERROR:", saveError);
+      return res.status(400).json({ 
+        message: "Failed to save boarding. Validation error.", 
+        error: saveError.message 
+      });
+    }
 
     const populatedBoarding = await boarding.populate("owner", "name email role");
 
@@ -89,8 +110,8 @@ export const createBoarding = async (req, res) => {
       boarding: populatedBoarding,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    console.error("CREATE_BOARDING_UNEXPECTED_ERROR:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -145,7 +166,8 @@ export const getBoardings = async (req, res) => {
       }
     }
     // If no status filter is provided, regular users should only see approved boardings
-    else if (!isAdmin(req.user)) {
+    // UNLESS they are filtering for their own boardings (mine=true)
+    else if (!isAdmin(req.user) && mine !== "true") {
       filter.status = "approved";
     }
 
@@ -284,6 +306,16 @@ export const updateBoarding = async (req, res) => {
 
     if (req.body.images !== undefined) {
       boarding.images = normalizeStringArray(req.body.images) || [];
+    }
+
+    if (req.body.location !== undefined) {
+      const { location } = req.body;
+      if (location && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+        boarding.location = {
+          type: "Point",
+          coordinates: [Number(location.coordinates[0]), Number(location.coordinates[1])],
+        };
+      }
     }
 
     if (req.body.type !== undefined) {

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { createBoarding } from "@/api/boardings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ImageUpload from "@/components/common/ImageUpload";
+import MapPicker from "@/components/common/MapPicker";
 
 export default function AddBoarding() {
   const navigate = useNavigate();
@@ -23,17 +24,27 @@ export default function AddBoarding() {
     price: "",
     description: "",
     images: [],
+    latitude: "",
+    longitude: "",
   });
 
   const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const onSelectChange = (val) => setForm(p => ({ ...p, type: val }));
   const onImageUpload = (imageUrls) => setForm(p => ({ ...p, images: imageUrls }));
+  const onLocationSelect = React.useCallback(({ lat, lng }) => setForm(p => ({ ...p, latitude: lat, longitude: lng })), []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await createBoarding(form);
+      const submitData = {
+        ...form,
+        location: {
+          type: "Point",
+          coordinates: [Number(form.longitude), Number(form.latitude)],
+        },
+      };
+      await createBoarding(submitData);
       navigate("/boardings");
     } catch (error) {
       console.error(error);
@@ -68,6 +79,10 @@ export default function AddBoarding() {
                     <Label htmlFor="city">City</Label>
                     <Input id="city" name="city" value={form.city} onChange={onChange} required />
                   </div>
+                </div>
+                <div className="space-y-4 pt-2">
+                  <Label>Pin Asset Location</Label>
+                  <MapPicker onLocationSelect={onLocationSelect} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Listing Type</Label>

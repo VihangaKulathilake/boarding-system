@@ -7,7 +7,7 @@ import {
   updateBoarding,
   getAdminStats,
 } from "../controllers/boardingController.js";
-import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
+import { authorizeRoles, protect, optionalProtect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ router.get("/admin/stats", protect, authorizeRoles("admin"), getAdminStats);
 router
   .route("/")
   .post(protect, authorizeRoles("admin", "landlord"), createBoarding)
-  .get(getBoardings);
+  .get(optionalProtect, getBoardings);
 
 router
   .route("/:id")

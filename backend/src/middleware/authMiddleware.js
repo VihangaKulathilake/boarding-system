@@ -22,6 +22,29 @@ export const protect = (req, res, next) => {
   }
 };
 
+// Like protect, but doesn't block requests without a token.
+// Populates req.user if a valid token is provided, otherwise continues without it.
+export const optionalProtect = (req, res, next) => {
+  const authHeader = req.headers.authorization || "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return next(); // no token — that's fine
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    if (process.env.JWT_SECRET) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded.user;
+    }
+  } catch {
+    // invalid token — ignore, proceed as unauthenticated
+  }
+
+  return next();
+};
+
 export const authorizeRoles = (...roles) => (req, res, next) => {
   const userRole = req.user?.role;
 
@@ -35,3 +58,4 @@ export const authorizeRoles = (...roles) => (req, res, next) => {
 
   return next();
 };
+

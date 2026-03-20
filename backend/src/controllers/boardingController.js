@@ -3,6 +3,7 @@ import Boarding from "../models/boarding.js";
 import Room from "../models/room.js";
 import User from "../models/User.js";
 import Payment from "../models/payment.js";
+import Booking from "../models/booking.js";
 import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
 import { normalizeStringArray } from "../utils/formatHelpers.js";
 
@@ -97,9 +98,9 @@ export const createBoarding = async (req, res) => {
       boarding = await Boarding.create(boardingData);
     } catch (saveError) {
       console.error("BOARDING_SAVE_ERROR:", saveError);
-      return res.status(400).json({ 
-        message: "Failed to save boarding. Validation error.", 
-        error: saveError.message 
+      return res.status(400).json({
+        message: "Failed to save boarding. Validation error.",
+        error: saveError.message
       });
     }
 
@@ -211,17 +212,46 @@ export const getBoardings = async (req, res) => {
       );
     }
 
+    const fullPropertyIds = boardings
+      .filter((boarding) => boarding.type === "full_property")
+      .map((boarding) => boarding._id);
+
+    let fullPropertyActiveBookings = new Map();
+    if (fullPropertyIds.length > 0) {
+      const activeBookings = await Booking.aggregate([
+        {
+          $match: {
+            boarding: { $in: fullPropertyIds },
+            status: { $in: ["pending", "approved"] }
+          }
+        },
+        { $group: { _id: "$boarding", count: { $sum: 1 } } }
+      ]);
+      fullPropertyActiveBookings = new Map(
+        activeBookings.map((b) => [String(b._id), b.count])
+      );
+    }
+
     const response = boardings.map((boarding) => {
-      if (boarding.type !== "room_based") return boarding;
-      const counts = roomCountsByBoarding.get(String(boarding._id)) || {
-        totalRooms: 0,
-        availableRooms: 0,
-      };
-      return {
-        ...boarding,
-        totalRooms: counts.totalRooms,
-        availableRooms: counts.availableRooms,
-      };
+      if (boarding.type === "room_based") {
+        const counts = roomCountsByBoarding.get(String(boarding._id)) || {
+          totalRooms: 0,
+          availableRooms: 0,
+        };
+        return {
+          ...boarding,
+          totalRooms: counts.totalRooms,
+          availableRooms: counts.availableRooms,
+        };
+      } else if (boarding.type === "full_property") {
+        const activeBookingCount = fullPropertyActiveBookings.get(String(boarding._id)) || 0;
+        return {
+          ...boarding,
+          // if activeBookingCount is 0, then all rooms are available, else no rooms are available
+          availableRooms: activeBookingCount === 0 ? boarding.totalRooms : 0
+        };
+      }
+      return boarding;
     });
 
     return res.json(response);

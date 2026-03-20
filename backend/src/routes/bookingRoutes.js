@@ -13,7 +13,7 @@ const router = express.Router();
 router
     .route("/")
     .post(protect, authorizeRoles("admin", "landlord"), createBooking)
-    .get(getBookings);
+    .get(protect, getBookings);
 
 router
     .route("/:id")

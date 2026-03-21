@@ -95,3 +95,38 @@ export const changePassword = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+// GET /api/users - Get all users (Admin only)
+export const getUsers = async (req, res) => {
+  try {
+    const { role } = req.query;
+    const filter = {};
+    
+    if (role) {
+      filter.role = role;
+    }
+    
+    const users = await User.find(filter).select("-password").sort({ createdAt: -1 });
+    return res.json(users);
+  } catch (error) {
+    console.error("GET_USERS_ERROR:", error);
+    return res.status(500).json({ message: "Server error while fetching users" });
+  }
+};
+
+// GET /api/users/:id - Get specific user completely (Admin only)
+export const adminGetUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.json(user);
+  } catch (error) {
+    if (error.kind === "ObjectId") {
+       return res.status(404).json({ message: "User not found" });
+    }
+    console.error("GET_USER_BY_ID_ERROR:", error);
+    return res.status(500).json({ message: "Server error while fetching targeted user" });
+  }
+};

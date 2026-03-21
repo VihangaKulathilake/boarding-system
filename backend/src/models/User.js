@@ -24,6 +24,22 @@ const userSchema = mongoose.Schema(
       enum: ["admin", "landlord", "tenant"],
       default: "tenant",
     },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    score: {
+      type: Number,
+      default: 100,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    address: {
+       type: String,
+       trim: true
+    }
   },
   {
     timestamps: true,

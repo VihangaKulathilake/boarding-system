@@ -1,5 +1,6 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
+import UserSidebar from '../../components/common/UserSidebar';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -84,10 +85,11 @@ export default function ClientHome() {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
+        <div className="bg-background min-h-screen font-sans flex flex-col">
             <UserNavbar />
-
-            <main className="container mx-auto px-4 py-12 flex-grow">
+            <div className="flex flex-1">
+                <UserSidebar />
+                <main className="flex-1 container mx-auto px-4 py-12 overflow-y-auto">
                 {/* Header Section */}
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -95,10 +97,10 @@ export default function ClientHome() {
                     className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
                 >
                     <div className="space-y-2">
-                        <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">Welcome, {stats.user?.name || 'User'}! 👋</h1>
-                        <p className="text-slate-500 font-bold text-xl">{stats.user?.role === 'tenant' ? 'Your property management overview for today.' : 'Ready to find your next home?'}</p>
+                        <h1 className="text-5xl font-black text-foreground tracking-tight leading-none">Welcome, {stats.user?.name || 'User'}! 👋</h1>
+                        <p className="text-muted-foreground font-bold text-xl">{stats.user?.role === 'tenant' ? 'Your property management overview for today.' : 'Ready to find your next home?'}</p>
                     </div>
-                    <div className="flex items-center gap-3 text-slate-400 font-black text-xs uppercase tracking-widest bg-white px-6 py-3 rounded-[1.5rem] shadow-sm border border-slate-50">
+                    <div className="flex items-center gap-3 text-muted-foreground/50 font-black text-xs uppercase tracking-widest bg-card px-6 py-3 rounded-[1.5rem] shadow-sm border border-border">
                         <Calendar className="w-4 h-4 text-primary" />
                         {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     </div>
@@ -119,18 +121,18 @@ export default function ClientHome() {
                         <motion.div key={i} variants={fadeIn}>
                             <Card className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden bg-white rounded-[2.5rem]">
                                 <CardContent className="p-8 flex items-center gap-6">
-                                    <div className={`w-16 h-16 rounded-[1.5rem] ${stat.bg} ${stat.text} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm`}>
+                                    <div className={`w-16 h-16 rounded-[1.5rem] ${stat.bg.replace('-50', '-500/10')} ${stat.text} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm`}>
                                         <stat.icon className="w-8 h-8" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{stat.val}</h3>
+                                        <p className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-widest mb-1">{stat.label}</p>
+                                        <h3 className="text-2xl font-black text-foreground tracking-tight">{stat.val}</h3>
                                         {stat.sub === "Active Lease" ? (
-                                            <Badge className="mt-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-50 border-none font-black px-3 py-1 text-[10px] uppercase tracking-widest">
+                                            <Badge className="mt-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-none font-black px-3 py-1 text-[10px] uppercase tracking-widest">
                                                 {stat.sub}
                                             </Badge>
                                         ) : (
-                                            <p className="text-xs text-slate-500 font-bold mt-1">{stat.sub}</p>
+                                            <p className="text-xs text-muted-foreground font-bold mt-1">{stat.sub}</p>
                                         )}
                                     </div>
                                 </CardContent>
@@ -149,37 +151,37 @@ export default function ClientHome() {
                         className="lg:col-span-2 space-y-10"
                     >
                         {/* Quick Actions */}
-                        <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2.5rem]">
-                            <CardHeader className="p-8 border-b border-slate-50 flex flex-row items-center justify-between">
+                        <Card className="border border-border shadow-sm overflow-hidden bg-card rounded-[2.5rem]">
+                            <CardHeader className="p-8 border-b border-border flex flex-row items-center justify-between">
                                 <div>
-                                    <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">Express Actions</CardTitle>
-                                    <CardDescription className="font-medium">Direct access to frequent operations.</CardDescription>
+                                    <CardTitle className="text-2xl font-black text-foreground tracking-tight">Express Actions</CardTitle>
+                                    <CardDescription className="text-muted-foreground font-medium">Direct access to frequent operations.</CardDescription>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-8">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     <Link to="/marketplace" className="no-underline">
-                                        <Button variant="outline" className="w-full h-auto py-8 flex flex-col gap-4 rounded-[2rem] border-slate-50 bg-slate-50 hover:bg-white hover:shadow-xl hover:border-primary/10 transition-all group active:scale-95">
-                                            <div className="w-14 h-14 rounded-2xl bg-white text-blue-600 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                                        <Button variant="outline" className="w-full h-auto py-8 flex flex-col gap-4 rounded-[2rem] border-border bg-muted/30 hover:bg-card hover:shadow-xl hover:border-primary/10 transition-all group active:scale-95">
+                                            <div className="w-14 h-14 rounded-2xl bg-card text-blue-600 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                                                 <Search className="w-7 h-7" />
                                             </div>
-                                            <span className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Find Boarding</span>
+                                            <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Find Boarding</span>
                                         </Button>
                                     </Link>
                                     <Link to="/payments" className="no-underline">
-                                        <Button variant="outline" className="w-full h-auto py-8 flex flex-col gap-4 rounded-[2rem] border-slate-50 bg-slate-50 hover:bg-white hover:shadow-xl hover:border-emerald-100 transition-all group active:scale-95">
-                                            <div className="w-14 h-14 rounded-2xl bg-white text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                                        <Button variant="outline" className="w-full h-auto py-8 flex flex-col gap-4 rounded-[2rem] border-border bg-muted/30 hover:bg-card hover:shadow-xl hover:border-emerald-500/20 transition-all group active:scale-95">
+                                            <div className="w-14 h-14 rounded-2xl bg-card text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
                                                 <CreditCard className="w-7 h-7" />
                                             </div>
-                                            <span className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Settlement</span>
+                                            <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Settlement</span>
                                         </Button>
                                     </Link>
                                     <Link to="/maintenance" className="no-underline">
-                                        <Button variant="outline" className="w-full h-auto py-8 flex flex-col gap-4 rounded-[2rem] border-slate-50 bg-slate-50 hover:bg-white hover:shadow-xl hover:border-rose-100 transition-all group active:scale-95">
-                                            <div className="w-14 h-14 rounded-2xl bg-white text-rose-600 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition-all shadow-sm">
+                                        <Button variant="outline" className="w-full h-auto py-8 flex flex-col gap-4 rounded-[2rem] border-border bg-muted/30 hover:bg-card hover:shadow-xl hover:border-rose-500/20 transition-all group active:scale-95">
+                                            <div className="w-14 h-14 rounded-2xl bg-card text-rose-600 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition-all shadow-sm">
                                                 <AlertTriangle className="w-7 h-7" />
                                             </div>
-                                            <span className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Report Issue</span>
+                                            <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Report Issue</span>
                                         </Button>
                                     </Link>
                                 </div>
@@ -187,26 +189,26 @@ export default function ClientHome() {
                         </Card>
 
                         {/* Recent Activity */}
-                        <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2.5rem]">
-                            <CardHeader className="p-8 border-b border-slate-50 flex flex-row items-center justify-between">
+                        <Card className="border border-border shadow-sm overflow-hidden bg-card rounded-[2.5rem]">
+                            <CardHeader className="p-8 border-b border-border flex flex-row items-center justify-between">
                                 <div>
-                                    <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">Timeline</CardTitle>
-                                    <CardDescription className="font-medium">Recent events across your stay.</CardDescription>
+                                    <CardTitle className="text-2xl font-black text-foreground tracking-tight">Timeline</CardTitle>
+                                    <CardDescription className="text-muted-foreground font-medium">Recent events across your stay.</CardDescription>
                                 </div>
                                 <Button variant="ghost" className="font-black text-[10px] uppercase tracking-widest text-primary hover:bg-primary/5 rounded-xl">Full Audit Log</Button>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="divide-y divide-slate-50">
+                                <div className="divide-y divide-border">
                                     {stats.activities.map((activity) => (
-                                        <div key={activity.id} className="p-8 flex items-center gap-6 hover:bg-slate-50 transition-all cursor-pointer group">
-                                            <div className={`w-12 h-12 rounded-2xl ${activity.bgColor} ${activity.textColor} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
+                                        <div key={activity.id} className="p-8 flex items-center gap-6 hover:bg-muted/30 transition-all cursor-pointer group">
+                                            <div className={`w-12 h-12 rounded-2xl ${activity.bgColor.replace('-100', '-500/10')} ${activity.textColor} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
                                                 <activity.icon className="w-6 h-6" />
                                             </div>
                                             <div className="flex-grow">
-                                                <h4 className="font-black text-lg text-slate-900 leading-tight group-hover:text-primary transition-colors">{activity.title}</h4>
-                                                <p className="text-xs text-slate-500 font-bold">{activity.subtitle}</p>
+                                                <h4 className="font-black text-lg text-foreground leading-tight group-hover:text-primary transition-colors">{activity.title}</h4>
+                                                <p className="text-xs text-muted-foreground font-bold">{activity.subtitle}</p>
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{activity.time}</span>
+                                            <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-widest">{activity.time}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -222,8 +224,8 @@ export default function ClientHome() {
                         className="space-y-10"
                     >
                         {/* Profile Completion Card */}
-                        <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden relative group rounded-[3rem] border-b-8 border-slate-950">
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full blur-3xl -mr-24 -mt-24 group-hover:bg-primary/30 transition-colors"></div>
+                        <Card className="border border-border shadow-2xl bg-card text-foreground overflow-hidden relative group rounded-[3rem] border-b-8 border-border">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl -mr-24 -mt-24 group-hover:bg-primary/20 transition-colors"></div>
                             <CardContent className="p-10 space-y-8 relative z-10">
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3 text-primary">
@@ -231,16 +233,16 @@ export default function ClientHome() {
                                         <span className="text-[10px] font-black uppercase tracking-[0.3em]">Trust Factor</span>
                                     </div>
                                     <h3 className="text-3xl font-black leading-tight tracking-tight">Expand Your Trust Score</h3>
-                                    <p className="text-slate-400 font-medium leading-relaxed">
+                                    <p className="text-muted-foreground font-medium leading-relaxed">
                                         Verified tenants are 6x more likely to secure premium properties.
                                     </p>
                                 </div>
                                 <div className="space-y-4">
                                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                                        <span className="text-slate-500 tracking-[0.2em]">Completion</span>
-                                        <span className="text-white">70%</span>
+                                        <span className="text-muted-foreground/50 tracking-[0.2em]">Completion</span>
+                                        <span className="text-foreground">70%</span>
                                     </div>
-                                    <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="relative h-2 bg-muted rounded-full overflow-hidden">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: "70%" }}
@@ -250,7 +252,7 @@ export default function ClientHome() {
                                     </div>
                                 </div>
                                 <Link to="/profile" className="no-underline block">
-                                    <Button className="w-full h-14 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-black text-xs uppercase tracking-widest shadow-xl">
+                                    <Button className="w-full h-14 rounded-2xl bg-primary text-white hover:opacity-90 font-black text-xs uppercase tracking-widest shadow-xl">
                                         Verify My Identity
                                     </Button>
                                 </Link>
@@ -258,18 +260,18 @@ export default function ClientHome() {
                         </Card>
 
                         {/* Current Space Details */}
-                        <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[3rem]">
+                        <Card className="border border-border shadow-sm overflow-hidden bg-card rounded-[3rem]">
                             <CardHeader className="p-8 pb-0">
-                                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Your Current Residence</CardTitle>
+                                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Your Current Residence</CardTitle>
                             </CardHeader>
                             <CardContent className="p-8 space-y-10">
                                 <div className="flex gap-6">
-                                    <div className="w-20 h-20 rounded-[1.5rem] bg-slate-50 text-slate-300 flex items-center justify-center shrink-0 border border-slate-100">
+                                    <div className="w-20 h-20 rounded-[1.5rem] bg-muted/30 text-muted-foreground/30 flex items-center justify-center shrink-0 border border-border">
                                         <Home className="w-10 h-10" />
                                     </div>
                                     <div className="flex flex-col justify-center gap-1">
-                                        <h4 className="font-black text-xl text-slate-900 leading-tight">Sunset Villa, RM 302</h4>
-                                        <div className="flex items-center gap-2 text-slate-400 font-bold text-xs">
+                                        <h4 className="font-black text-xl text-foreground leading-tight">Sunset Villa, RM 302</h4>
+                                        <div className="flex items-center gap-2 text-muted-foreground/50 font-bold text-xs">
                                             <MapPin className="w-3.5 h-3.5 text-primary" />
                                             123 Palm Ave, CA
                                         </div>
@@ -277,11 +279,11 @@ export default function ClientHome() {
                                 </div>
                                 <div className="grid grid-cols-1 gap-3">
                                     <Link to="/my-bookings" className="no-underline">
-                                        <Button variant="outline" className="w-full h-12 rounded-2xl border-slate-100 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">
+                                        <Button variant="outline" className="w-full h-12 rounded-2xl border-border font-black text-[10px] uppercase tracking-widest hover:bg-muted/30 transition-all">
                                             Manage Residency
                                         </Button>
                                     </Link>
-                                    <Button variant="ghost" className="w-full h-12 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-primary transition-colors">
+                                    <Button variant="ghost" className="w-full h-12 text-muted-foreground/50 font-black text-[10px] uppercase tracking-widest hover:text-primary transition-colors">
                                         Contact Manager
                                     </Button>
                                 </div>
@@ -290,8 +292,7 @@ export default function ClientHome() {
                     </motion.div>
                 </div>
             </main>
-
-
         </div>
+    </div>
     );
 }

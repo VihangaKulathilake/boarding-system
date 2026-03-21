@@ -1,12 +1,15 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
+import UserSidebar from '../../components/common/UserSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     MapPin, Star, Wifi, Wind, Car, Zap, CheckCircle2,
     Calendar, Phone, MessageCircle, ArrowLeft, Heart,
     Share2, Info, ChevronRight, Home, Layout, Mail, ExternalLink, Activity,
-    BookOpen, Bath, Shirt, Droplets, DoorOpen, Bus, VolumeX, Shield, Coffee
+    BookOpen, Bath, Shirt, Droplets, DoorOpen, Bus, VolumeX, Shield, Coffee,
+    X, Image as ImageIcon
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +30,10 @@ const staggerContainer = {
 
 export default function BoardingDetails() {
     const { id } = useParams();
+    const [items, setItems] = React.useState([]); // Assuming items is a generic list if used, but let's stick to what's there
     const [boarding, setBoarding] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
+    const [selectedImage, setSelectedImage] = React.useState(null);
     const [activeImage, setActiveImage] = React.useState(0);
 
     React.useEffect(() => {
@@ -102,8 +107,9 @@ export default function BoardingDetails() {
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
-
-            <main className="container mx-auto px-4 py-8 flex-grow">
+            <div className="flex flex-1 overflow-hidden">
+                <UserSidebar />
+                <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
                 {/* Top Navigation Row */}
                 <motion.div
                     initial={{ opacity: 0, x: -10 }}
@@ -205,6 +211,97 @@ export default function BoardingDetails() {
                             </p>
                         </motion.div>
 
+                        {/* Room Selection Area (Only for Room Based) */}
+                        {boarding.type === "room_based" && boarding.rooms?.length > 0 && (
+                            <motion.div variants={fadeInUp} className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3 text-2xl font-black text-slate-900">
+                                        <DoorOpen className="w-8 h-8 text-indigo-500" />
+                                        Available Rooms
+                                    </div>
+                                    <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none rounded-xl font-bold px-4 py-1.5 tracking-wide">
+                                        {boarding.availableRooms} Vacancies
+                                    </Badge>
+                                </div>
+                                <div className="grid gap-4">
+                                    {boarding.rooms.map((room, idx) => (
+                                        <div 
+                                            key={idx} 
+                                            className={`flex flex-col lg:flex-row lg:items-center justify-between p-6 rounded-[2.5rem] border-2 transition-all ${
+                                                room.available 
+                                                    ? 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-500/10' 
+                                                    : 'bg-slate-50 border-slate-100 opacity-60 grayscale'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-6">
+                                                {/* Room Image Hook */}
+                                                {room.images?.length > 0 ? (
+                                                    <div 
+                                                        className="relative group/room-img cursor-pointer shrink-0" 
+                                                        onClick={() => setSelectedImage(room.images[0])}
+                                                    >
+                                                        <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-xl shadow-indigo-500/10">
+                                                            <img 
+                                                                src={room.images[0]} 
+                                                                alt={`Room ${room.roomNumber}`} 
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover/room-img:scale-110" 
+                                                            />
+                                                        </div>
+                                                        {room.images.length > 1 && (
+                                                            <div className="absolute -bottom-2 -right-2 bg-indigo-600 text-white text-[9px] font-black w-7 h-7 rounded-xl flex items-center justify-center border-2 border-white shadow-lg">
+                                                                +{room.images.length - 1}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center border-2 border-dashed shrink-0 ${room.available ? 'border-indigo-100 bg-indigo-50/30' : 'border-slate-200 bg-slate-100'}`}>
+                                                         <ImageIcon className={`w-8 h-8 ${room.available ? 'text-indigo-200' : 'text-slate-300'}`} />
+                                                    </div>
+                                                )}
+
+                                                    <div className="space-y-1.5 min-w-0 flex-1">
+                                                        <h4 className="font-black text-slate-900 text-xl flex items-center gap-2">
+                                                            Room {room.roomNumber}
+                                                            <span className="text-slate-200 font-normal">|</span>
+                                                            <span className="text-slate-500 text-sm font-bold uppercase tracking-tight">{room.capacity} Person{room.capacity > 1 ? 's' : ''}</span>
+                                                        </h4>
+                                                        <p className={`font-black uppercase text-[10px] tracking-[0.1em] ${room.available ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                                            {room.available ? 'Available Now' : 'Currently Occupied'}
+                                                        </p>
+                                                        {room.description && (
+                                                            <p className="text-slate-500 text-sm font-medium line-clamp-2 mt-2 leading-relaxed">
+                                                                {room.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                            </div>
+
+                                            <div className="mt-6 lg:mt-0 flex flex-col md:flex-row items-center gap-8 lg:gap-12">
+                                                <div className="text-center md:text-right w-full md:w-auto">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Monthly Cost</span>
+                                                    <span className="text-3xl font-black text-slate-900 flex items-baseline justify-center md:justify-end gap-1">
+                                                        <span className="text-sm font-bold text-slate-400">Rs.</span>
+                                                        {room.price.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <Button 
+                                                    disabled={!room.available} 
+                                                    className={`w-full md:w-auto rounded-2xl font-black px-10 h-14 transition-all ${
+                                                        room.available 
+                                                            ? 'bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95' 
+                                                            : 'bg-slate-200 text-slate-500 scale-95'
+                                                    }`}
+                                                >
+                                                    {room.available ? 'Reserve Now' : 'Full / Waitlist'}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                            </motion.div>
+                        )}
+
                         {/* Completely Data-Driven Amenities */}
                         {amenities.length > 0 && (
                             <motion.div variants={fadeInUp} className="space-y-6">
@@ -268,18 +365,23 @@ export default function BoardingDetails() {
                                         {boarding.price ? (
                                             <div className="flex items-end gap-1.5 mb-4">
                                                 <span className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Rs. {boarding.price.toLocaleString()}</span>
-                                                <span className="text-slate-400 font-bold mb-1.5 md:mb-2 uppercase text-xs tracking-widest">/month</span>
+                                                <span className="text-slate-400 font-bold mb-1.5 md:mb-2 uppercase text-xs tracking-widest">
+                                                    {boarding.type === 'room_based' ? '/room' : '/month'}
+                                                </span>
                                             </div>
                                         ) : (
                                             <div className="text-3xl font-black text-slate-900 tracking-tighter mb-4">Price on Request</div>
                                         )}
+                                        {boarding.type === 'room_based' && (
+                                            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Starting prices per available room</p>
+                                        )}
                                         <div className="flex flex-wrap gap-2">
                                             <Badge variant="outline" className={`border-emerald-200 bg-emerald-50 text-emerald-700 font-black px-3 py-1 text-[10px] tracking-widest uppercase`}>
-                                                <Activity className="w-3.5 h-3.5 mr-1.5" /> {boarding.status || 'AVAILABLE'}
+                                                <Activity className="w-3.5 h-3.5 mr-1.5" /> {boarding.status || (boarding.availableRooms > 0 ? 'AVAILABLE' : 'FULLY BOOKED')}
                                             </Badge>
                                             {boarding.totalRooms && (
                                                 <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 font-black px-3 py-1 text-[10px] tracking-widest uppercase">
-                                                    <Home className="w-3.5 h-3.5 mr-1.5" /> {boarding.totalRooms} Rooms
+                                                    <Home className="w-3.5 h-3.5 mr-1.5" /> {boarding.totalRooms} Units
                                                 </Badge>
                                             )}
                                         </div>
@@ -331,7 +433,36 @@ export default function BoardingDetails() {
                         </motion.div>
                     </div>
                 </div>
+            <AnimatePresence>
+                {selectedImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedImage(null)}
+                        className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+                    >
+                        <motion.button
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="absolute top-10 right-10 text-white/50 hover:text-white transition-colors"
+                        >
+                            <X className="w-10 h-10" />
+                        </motion.button>
+                        <motion.img
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            src={selectedImage}
+                            alt="Room Review"
+                            className="max-w-full max-h-full rounded-[2.5rem] shadow-2xl border-4 border-white/10"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
             </main>
         </div>
+    </div>
     );
 }
+

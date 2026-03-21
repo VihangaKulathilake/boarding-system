@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Plus, Trash2, MapPin } from "lucide-react";
 import { getBoardingById, updateBoarding } from "@/api/boardings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MapPicker from "@/components/common/MapPicker";
@@ -26,6 +27,7 @@ export default function EditBoarding() {
     description: "",
     latitude: "",
     longitude: "",
+    rooms: [], // Existing rooms for room_based
   });
 
   React.useEffect(() => {
@@ -46,6 +48,7 @@ export default function EditBoarding() {
         description: data.description,
         latitude: data.location?.coordinates[1]?.toString() || "",
         longitude: data.location?.coordinates[0]?.toString() || "",
+        rooms: data.rooms || [],
       });
     } catch (error) {
       console.error(error);
@@ -57,6 +60,28 @@ export default function EditBoarding() {
   const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const onSelectChange = (val) => setForm(p => ({ ...p, type: val }));
   const onLocationSelect = React.useCallback(({ lat, lng }) => setForm(p => ({ ...p, latitude: lat, longitude: lng })), []);
+  
+  const addRoom = () => {
+    setForm(p => ({
+      ...p,
+      rooms: [...(p.rooms || []), { roomNumber: "", description: "", price: "", capacity: 1, images: [] }]
+    }));
+  };
+
+  const removeRoom = (index) => {
+    setForm(p => ({
+      ...p,
+      rooms: p.rooms.filter((_, i) => i !== index)
+    }));
+  };
+
+  const onRoomChange = (index, field, value) => {
+    setForm(p => {
+      const newRooms = [...p.rooms];
+      newRooms[index] = { ...newRooms[index], [field]: value };
+      return { ...p, rooms: newRooms };
+    });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +94,13 @@ export default function EditBoarding() {
           coordinates: [Number(form.longitude), Number(form.latitude)],
         },
       };
+
+      if (form.type === "room_based") {
+        delete submitData.price;
+        delete submitData.totalRooms;
+      } else {
+        delete submitData.rooms;
+      }
       await updateBoarding(id, submitData);
       navigate("/boardings");
     } catch (error) {
@@ -132,16 +164,108 @@ export default function EditBoarding() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="totalRooms">Total Rooms</Label>
-                    <Input id="totalRooms" name="totalRooms" type="number" min="1" value={form.totalRooms} onChange={onChange} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Monthly Rent / Base Price (LKR)</Label>
-                    <Input id="price" name="price" type="number" min="0" value={form.price} onChange={onChange} required={form.type === 'full_property'} />
-                  </div>
-                </div>
+                  {form.type === 'full_property' ? (
+                    <div className="grid md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
+                      <div className="space-y-3">
+                        <Label htmlFor="totalRooms" className="font-bold text-slate-700">Total Rooms</Label>
+                        <Input id="totalRooms" name="totalRooms" type="number" min="1" className="h-12 rounded-xl" value={form.totalRooms} onChange={onChange} required />
+                      </div>
+                      <div className="space-y-3">
+                        <Label htmlFor="price" className="font-bold text-slate-700">Monthly Rent (LKR)</Label>
+                        <Input id="price" name="price" type="number" min="0" className="h-12 rounded-xl" value={form.price} onChange={onChange} required />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-top-2 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
+                      <div className="flex items-center justify-between">
+                         <Label className="font-black text-xs uppercase tracking-widest text-indigo-600">Room Inventory Matrix</Label>
+                         <Button type="button" onClick={addRoom} variant="outline" className="h-10 px-4 rounded-xl font-bold bg-white text-indigo-600 border-indigo-100 hover:bg-indigo-50 flex items-center gap-2 shadow-sm">
+                           <Plus className="w-4 h-4" /> Add Room
+                         </Button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {form.rooms?.map((room, index) => (
+                          <div key={index} className="bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-sm relative group space-y-6">
+                            <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-3">
+                                 <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                                   {index + 1}
+                                 </div>
+                                 <h4 className="font-black text-slate-900 uppercase text-xs tracking-widest">Room Specification</h4>
+                               </div>
+                               {form.rooms.length > 1 && (
+                                <Button
+                                  type="button"
+                                  onClick={() => removeRoom(index)}
+                                  variant="ghost"
+                                  className="h-10 w-10 p-0 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                               )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-400">Room No.</Label>
+                                <Input
+                                  placeholder="101"
+                                  className="h-12 rounded-xl"
+                                  value={room.roomNumber}
+                                  onChange={(e) => onRoomChange(index, 'roomNumber', e.target.value)}
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-400">Monthly Price (LKR)</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="15000"
+                                  className="h-12 rounded-xl"
+                                  value={room.price}
+                                  onChange={(e) => onRoomChange(index, 'price', e.target.value)}
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-400">Capacity</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  placeholder="1"
+                                  className="h-12 rounded-xl"
+                                  value={room.capacity}
+                                  onChange={(e) => onRoomChange(index, 'capacity', e.target.value)}
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-black uppercase text-slate-400">Room Description</Label>
+                              <Textarea
+                                placeholder="E.g., Master bedroom with attached bathroom and private balcony..."
+                                className="min-h-[100px] rounded-xl resize-none"
+                                value={room.description}
+                                onChange={(e) => onRoomChange(index, 'description', e.target.value)}
+                              />
+                            </div>
+
+                            <div className="space-y-3 pt-4 border-t border-slate-50">
+                               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Individual Room Photos</Label>
+                               <ImageUpload 
+                                  maxImages={3} 
+                                  initialImages={room.images || []}
+                                  onUploadComplete={(urls) => onRoomChange(index, 'images', urls)} 
+                               />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" rows={5} value={form.description} onChange={onChange} />

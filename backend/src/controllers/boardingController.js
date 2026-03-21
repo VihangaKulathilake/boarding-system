@@ -18,6 +18,7 @@ export const createBoarding = async (req, res) => {
       type,
       price,
       totalRooms,
+      rooms, // Expecting an array of room objects for room_based
       facilities,
       images,
       location,
@@ -63,6 +64,10 @@ export const createBoarding = async (req, res) => {
       }
     }
 
+    if (type === "room_based" && (!rooms || !Array.isArray(rooms) || rooms.length === 0)) {
+      return res.status(400).json({ message: "At least one room definition is required for room_based boardings" });
+    }
+
     const nextStatus = isAdmin(req.user) && status ? status : "pending";
 
     const boardingData = {
@@ -94,17 +99,44 @@ export const createBoarding = async (req, res) => {
     console.log("CREATING_BOARDING_WITH_DATA:", JSON.stringify(boardingData, null, 2));
 
     let boarding;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-      boarding = await Boarding.create(boardingData);
+      boarding = new Boarding(boardingData);
+      await boarding.save({ session });
+
+      if (type === "room_based" && rooms && Array.isArray(rooms)) {
+        const roomsData = rooms.map(room => ({
+          boarding: boarding._id,
+          roomNumber: room.roomNumber,
+          price: Number(room.price),
+          capacity: Number(room.capacity),
+          facilities: normalizeStringArray(room.facilities) || [],
+          images: normalizeStringArray(room.images) || [],
+          available: true
+        }));
+
+        await Room.insertMany(roomsData, { session });
+        
+        // Update totalRooms
+        boarding.totalRooms = roomsData.length;
+        await boarding.save({ session });
+      }
+
+      await session.commitTransaction();
     } catch (saveError) {
+      await session.abortTransaction();
       console.error("BOARDING_SAVE_ERROR:", saveError);
       return res.status(400).json({
-        message: "Failed to save boarding. Validation error.",
+        message: "Failed to save boarding or rooms. Validation error.",
         error: saveError.message
       });
+    } finally {
+      session.endSession();
     }
 
-    const populatedBoarding = await boarding.populate("owner", "name email role");
+    const populatedBoarding = await Boarding.findById(boarding._id).populate("owner", "name email role");
 
     return res.status(201).json({
       message: "Boarding registered successfully",
@@ -189,9 +221,9 @@ export const getBoardings = async (req, res) => {
       .filter((boarding) => boarding.type === "room_based")
       .map((boarding) => boarding._id);
 
-    let roomCountsByBoarding = new Map();
+    let roomStatsByBoarding = new Map();
     if (roomBasedIds.length > 0) {
-      const counts = await Room.aggregate([
+      const stats = await Room.aggregate([
         { $match: { boarding: { $in: roomBasedIds } } },
         {
           $group: {
@@ -200,33 +232,54 @@ export const getBoardings = async (req, res) => {
             availableRooms: {
               $sum: { $cond: [{ $eq: ["$available", true] }, 1, 0] },
             },
+            minPrice: { $min: "$price" },
+            maxPrice: { $max: "$price" }
           },
         },
       ]);
 
-      roomCountsByBoarding = new Map(
-        counts.map((count) => [
-          String(count._id),
-          { totalRooms: count.totalRooms, availableRooms: count.availableRooms },
+      roomStatsByBoarding = new Map(
+        stats.map((stat) => [
+          String(stat._id),
+          { 
+            totalRooms: stat.totalRooms, 
+            availableRooms: stat.availableRooms,
+            minPrice: stat.minPrice,
+            maxPrice: stat.maxPrice 
+          },
         ])
       );
     }
 
+    // For full_property type, we need to check for active bookings to determine availability
     const fullPropertyIds = boardings
       .filter((boarding) => boarding.type === "full_property")
+      // get all the full_property boardings id's only
       .map((boarding) => boarding._id);
 
+    // Create an empty map to store the active bookings count for each full_property boarding
     let fullPropertyActiveBookings = new Map();
     if (fullPropertyIds.length > 0) {
+
+      // aggregate() does the same thing as find() but with more features
       const activeBookings = await Booking.aggregate([
         {
+
+          // match the full_property boardings id's only
           $match: {
+            // match the pending and approved status only
             boarding: { $in: fullPropertyIds },
             status: { $in: ["pending", "approved"] }
           }
         },
+
+        // group the full_property boardings id's only and count the number of active bookings
+        // _id: "$boarding" - group by the boarding id
+        // count: { $sum: 1 } - add 1 to the count for each active booking
         { $group: { _id: "$boarding", count: { $sum: 1 } } }
       ]);
+
+      // create a map of full_property boardings id's and their active bookings count
       fullPropertyActiveBookings = new Map(
         activeBookings.map((b) => [String(b._id), b.count])
       );
@@ -234,16 +287,19 @@ export const getBoardings = async (req, res) => {
 
     const response = boardings.map((boarding) => {
       if (boarding.type === "room_based") {
-        const counts = roomCountsByBoarding.get(String(boarding._id)) || {
+        const stats = roomStatsByBoarding.get(String(boarding._id)) || {
           totalRooms: 0,
           availableRooms: 0,
+          minPrice: 0
         };
         return {
           ...boarding,
-          totalRooms: counts.totalRooms,
-          availableRooms: counts.availableRooms,
+          totalRooms: stats.totalRooms,
+          availableRooms: stats.availableRooms,
+          price: stats.minPrice // Set price to minPrice for room_based for marketplace display
         };
       } else if (boarding.type === "full_property") {
+        // get the active bookings count for the full_property boardings
         const activeBookingCount = fullPropertyActiveBookings.get(String(boarding._id)) || 0;
         return {
           ...boarding,
@@ -284,12 +340,14 @@ export const getBoardingById = async (req, res) => {
       const rooms = await Room.find({ boarding: id });
       const totalRooms = rooms.length;
       const availableRooms = rooms.filter((room) => room.available).length;
+      const minPrice = rooms.length > 0 ? Math.min(...rooms.map(r => r.price)) : 0;
 
       return res.json({
         ...boarding.toObject(),
         totalRooms,
         availableRooms,
         rooms,
+        price: minPrice, // Set price to minPrice for detail view
       });
     }
 
@@ -348,9 +406,7 @@ export const updateBoarding = async (req, res) => {
       }
     }
 
-    if (req.body.type !== undefined) {
-      boarding.type = nextType;
-    }
+    boarding.type = nextType;
 
     if (nextType === "full_property") {
       if (req.body.totalRooms !== undefined) {
@@ -376,9 +432,9 @@ export const updateBoarding = async (req, res) => {
       if (boarding.totalRooms === undefined) {
         return res.status(400).json({ message: "totalRooms is required for full_property" });
       }
-    } else {
+    } else if (nextType === "room_based") {
       boarding.price = undefined;
-      boarding.totalRooms = undefined; // Will be calculated dynamically
+      boarding.totalRooms = req.body.rooms?.length || boarding.totalRooms;
     }
 
     if (req.body.status !== undefined) {
@@ -388,18 +444,68 @@ export const updateBoarding = async (req, res) => {
       boarding.status = req.body.status;
     }
 
-    await boarding.save();
-    await boarding.populate("owner", "name email role");
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      await boarding.save({ session });
+
+      if (nextType === "room_based" && Array.isArray(req.body.rooms)) {
+        const incomingRooms = req.body.rooms;
+        const existingRooms = await Room.find({ boarding: id }).session(session);
+
+        // Identify rooms to delete
+        const incomingIds = incomingRooms.map(r => r._id?.toString()).filter(Boolean);
+        const roomsToDelete = existingRooms.filter(r => !incomingIds.includes(r._id.toString()));
+        if (roomsToDelete.length > 0) {
+          await Room.deleteMany({ _id: { $in: roomsToDelete.map(r => r._id) } }, { session });
+        }
+
+        // Identify rooms to update or create
+        for (const room of incomingRooms) {
+          const roomData = {
+            boarding: id,
+            roomNumber: room.roomNumber,
+            price: Number(room.price),
+            capacity: Number(room.capacity),
+            facilities: normalizeStringArray(room.facilities) || [],
+            images: normalizeStringArray(room.images) || [],
+            available: room.available !== undefined ? room.available : true,
+          };
+
+          if (room._id && mongoose.Types.ObjectId.isValid(room._id)) {
+            await Room.findByIdAndUpdate(room._id, roomData, { session, runValidators: true });
+          } else {
+            const newRoom = new Room(roomData);
+            await newRoom.save({ session });
+          }
+        }
+      }
+
+      await session.commitTransaction();
+    } catch (saveError) {
+      await session.abortTransaction();
+      console.error("UPDATE_BOARDING_SAVE_ERROR:", saveError);
+      return res.status(400).json({
+        message: "Failed to update boarding or rooms",
+        error: saveError.message
+      });
+    } finally {
+      session.endSession();
+    }
+
+    const updatedBoarding = await Boarding.findById(id).populate("owner", "name email role");
 
     return res.json({
       message: "Boarding updated successfully",
-      boarding,
+      boarding: updatedBoarding,
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // Delete a boarding by id
 export const deleteBoarding = async (req, res) => {

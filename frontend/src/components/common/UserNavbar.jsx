@@ -32,6 +32,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { clearAuthSession } from "@/lib/auth";
+import Logo from "@/components/common/Logo";
 
 export default function UserNavbar() {
     const navigate = useNavigate();
@@ -54,27 +55,11 @@ export default function UserNavbar() {
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Brand */}
                 <div className="flex items-center gap-8">
-                    <Link to="/client-home" className="flex items-center gap-2 transition-opacity hover:opacity-80 no-underline">
-                        <div className="bg-primary p-1.5 rounded-lg">
-                            <Home className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-xl font-bold tracking-tight text-slate-900">StayMate</span>
+                    <Link to="/client-home" className="transition-opacity hover:opacity-80 no-underline">
+                        <Logo suffix="Tenant" />
                     </Link>
-
-                    {/* Desktop Main Nav */}
-                    <div className="hidden lg:flex items-center gap-1">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                to={link.href}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 rounded-md hover:bg-slate-100 transition-colors no-underline"
-                            >
-                                <link.icon className="w-4 h-4" />
-                                {link.name}
-                            </Link>
-                        ))}
-                    </div>
                 </div>
+
 
                 <div className="flex items-center gap-4">
                     {/* Search Bar */}
@@ -134,9 +119,8 @@ export default function UserNavbar() {
                             </SheetTrigger>
                             <SheetContent side="right" className="w-[300px]">
                                 <SheetHeader>
-                                    <SheetTitle className="text-left flex items-center gap-2">
-                                        <Home className="w-5 h-5 text-primary" />
-                                        <span>StayMate</span>
+                                    <SheetTitle className="text-left">
+                                        <Logo size="sm" />
                                     </SheetTitle>
                                 </SheetHeader>
                                 <div className="flex flex-col gap-2 mt-8">

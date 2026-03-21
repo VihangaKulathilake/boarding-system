@@ -8,7 +8,7 @@ import {
     Headset,
     Wallet
 } from "lucide-react";
-import { Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
@@ -26,13 +26,13 @@ export default function Sidebar() {
             </div>
             <div className="flex-grow py-6 px-4 space-y-2">
                 {menuItems.map((item) => (
-                    <Link
+                    <NavLink
                         key={item.name}
                         to={item.href}
-                        className={cn(
+                        className={({ isActive }) => cn(
                             "flex items-center justify-between px-4 py-3 rounded-2xl transition-all no-underline group",
-                            item.name === "Dashboard"
-                                ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            isActive
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                         )}
                     >
@@ -43,7 +43,7 @@ export default function Sidebar() {
                         <ChevronRight className={cn(
                             "w-4 h-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-50 group-hover:translate-x-0"
                         )} />
-                    </Link>
+                    </NavLink>
                 ))}
             </div>
             <div className="p-4 border-t border-slate-50">

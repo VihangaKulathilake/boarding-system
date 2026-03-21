@@ -19,6 +19,7 @@ import AdminNavbar from '@/components/common/AdminNavbar';
 import Sidebar from '@/components/common/Sidebar';
 import PlatformAdminNavbar from '@/components/common/PlatformAdminNavbar';
 import PlatformAdminSidebar from '@/components/common/PlatformAdminSidebar';
+import UserSidebar from '@/components/common/UserSidebar';
 
 // Auth & API
 import { getCurrentUser, clearAuthSession, saveAuthSession } from '@/lib/auth';
@@ -78,8 +79,10 @@ function TenantLayout({ children }) {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-purple-50/20 font-sans flex flex-col">
             <UserNavbar />
-            <main className="flex-grow container mx-auto px-4 py-10">{children}</main>
-
+            <div className="flex flex-1 overflow-hidden">
+                <UserSidebar />
+                <main className="flex-1 container mx-auto px-4 py-10 overflow-y-auto">{children}</main>
+            </div>
         </div>
     );
 }

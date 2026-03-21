@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
+import UserSidebar from '../../components/common/UserSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, MapPin, Star, Wifi, Wind, Car, Zap, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -84,8 +85,9 @@ export default function Marketplace() {
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
-
-            <main className="container mx-auto px-4 py-8 flex-grow">
+            <div className="flex flex-1">
+                <UserSidebar />
+                <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
                 {/* Search & Filter Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
@@ -156,7 +158,7 @@ export default function Marketplace() {
                     animate="visible"
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12"
                 >
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout">
                         {loading && <p className="col-span-full text-center p-12 text-slate-400 font-bold italic tracking-widest">Scanning Boarding Infrastructure...</p>}
                         {!loading && boardingsList.map((boarding) => (
                             <motion.div
@@ -184,8 +186,8 @@ export default function Marketplace() {
                                             
                                             {/* Badges Overlay */}
                                             <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
-                                                <Badge className="bg-white/90 text-slate-900 hover:bg-white border-none backdrop-blur-md shadow-sm px-4 py-1.5 font-bold rounded-full">
-                                                    {boarding.type || "Boarding"}
+                                                <Badge className="bg-white/90 text-slate-900 hover:bg-white border-none backdrop-blur-md shadow-sm px-4 py-1.5 font-bold rounded-full uppercase text-[10px] tracking-widest">
+                                                    {boarding.type?.replace('_', ' ') || "Boarding"}
                                                 </Badge>
                                                 <motion.button
                                                     whileTap={{ scale: 0.9 }}
@@ -203,11 +205,7 @@ export default function Marketplace() {
                                             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20 flex items-center gap-4 text-white">
                                                 {boarding.amenities?.slice(0, 2).map(amenity => (
                                                     <div key={amenity} className="flex items-center gap-1.5">
-                                                        {amenity === "Wifi" && <Wifi className="w-4 h-4" />}
-                                                        {amenity === "AC" && <Wind className="w-4 h-4" />}
-                                                        {amenity === "Parking" && <Car className="w-4 h-4" />}
-                                                        {amenity === "Laundry" && <Zap className="w-4 h-4" />}
-                                                        <span className="text-xs font-medium">{amenity}</span>
+                                                        <span className="text-xs font-medium uppercase tracking-tight">{amenity}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -215,7 +213,7 @@ export default function Marketplace() {
 
                                         <CardHeader className="p-5 pb-0">
                                             <div className="flex justify-between items-start gap-4">
-                                                <div className="space-y-1.5">
+                                                <div className="space-y-1.5 flex-1 min-w-0">
                                                     <CardTitle className="text-xl font-black text-slate-900 leading-tight line-clamp-1 group-hover:text-primary transition-colors">
                                                         {boarding.boardingName}
                                                     </CardTitle>
@@ -231,45 +229,40 @@ export default function Marketplace() {
                                                         <Star className="w-3.5 h-3.5 flex-shrink-0 fill-amber-500 text-amber-500" />
                                                         <span className="text-sm font-black">{boarding.rating || "New"}</span>
                                                     </div>
-                                                    <span className="text-[10px] text-slate-400 font-bold tracking-wide">
-                                                        ({boarding.reviews || 0} REVIEWS)
-                                                    </span>
                                                 </div>
                                             </div>
                                         </CardHeader>
 
                                         <CardContent className="p-5 pt-4 flex-grow flex flex-col justify-end">
-                                            <div className="flex gap-3 pt-4 border-t border-slate-100">
-                                                {['Wifi', 'AC', 'Parking', 'Laundry'].filter(a => boarding.amenities?.includes(a)).map((amenity) => (
-                                                    <div key={amenity} className="flex flex-col items-center gap-1.5 group/amenity">
-                                                        <div className="p-2 rounded-xl bg-slate-50 text-slate-400 group-hover/amenity:bg-primary/10 group-hover/amenity:text-primary transition-colors duration-300">
-                                                            {amenity === "Wifi" && <Wifi className="w-4 h-4" />}
-                                                            {amenity === "AC" && <Wind className="w-4 h-4" />}
-                                                            {amenity === "Parking" && <Car className="w-4 h-4" />}
-                                                            {amenity === "Laundry" && <Zap className="w-4 h-4" />}
-                                                        </div>
-                                                    </div>
+                                            <div className="flex gap-2 flex-wrap pt-4 border-t border-slate-100">
+                                                {boarding.facilities?.slice(0, 3).map((facility) => (
+                                                    <Badge key={facility} variant="secondary" className="bg-slate-50 text-slate-500 text-[9px] font-black uppercase tracking-tighter rounded-md px-2 py-0.5 border-none">
+                                                        {facility}
+                                                    </Badge>
                                                 ))}
-                                                {(!boarding.amenities || boarding.amenities.length === 0) && (
-                                                    <p className="text-xs text-slate-400 font-medium italic">Basic amenities included</p>
+                                                {(!boarding.facilities || boarding.facilities.length === 0) && (
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Standard Amenities</p>
                                                 )}
                                             </div>
                                         </CardContent>
 
                                         <CardFooter className="p-5 pt-0 mt-auto flex items-center justify-between">
-                                            <div>
-                                                <span className="text-slate-500 text-xs font-bold uppercase tracking-wider block mb-0.5">Monthly Rent</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] block mb-0.5">
+                                                    {boarding.type === "room_based" ? "Starting from" : "Monthly Rent"}
+                                                </span>
                                                 <div className="flex items-baseline gap-1">
-                                                    <span className="text-2xl font-black text-slate-900 shadow-sm">
-                                                        Rs. {boarding.price?.toLocaleString() || "N/A"}
+                                                    <span className="text-2xl font-black text-slate-900 leading-none">
+                                                        Rs. {boarding.price?.toLocaleString() || "P.O.A"}
                                                     </span>
+                                                    {boarding.type === "room_based" && <span className="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">/MONTH</span>}
                                                 </div>
                                             </div>
                                             
                                             <motion.div 
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
-                                                className="bg-slate-900 group-hover:bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-colors flex items-center gap-2"
+                                                className="bg-slate-900 group-hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg transition-all flex items-center gap-2"
                                             >
                                                 Explore
                                                 <motion.span
@@ -288,8 +281,7 @@ export default function Marketplace() {
                     </AnimatePresence>
                 </motion.div>
             </main>
-
-
         </div>
+    </div>
     );
 }

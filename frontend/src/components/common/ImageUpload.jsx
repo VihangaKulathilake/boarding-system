@@ -2,10 +2,17 @@ import React, { useState, useRef } from "react";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import axiosInstance from "@/api/axios";
 
-const ImageUpload = ({ onUploadComplete, maxImages = 5 }) => {
-  const [images, setImages] = useState([]);
+const ImageUpload = ({ onUploadComplete, maxImages = 5, initialImages = [] }) => {
+  const [images, setImages] = React.useState(initialImages);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  React.useEffect(() => {
+    if (initialImages && initialImages.length > 0 && images.length === 0) {
+      setImages(initialImages);
+    }
+  }, [initialImages]);
+
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);

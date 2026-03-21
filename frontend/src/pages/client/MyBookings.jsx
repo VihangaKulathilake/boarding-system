@@ -1,5 +1,6 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
+import UserSidebar from '../../components/common/UserSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calendar,
@@ -58,8 +59,9 @@ export default function MyBookings() {
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
-
-            <main className="container mx-auto px-4 py-8 flex-grow">
+            <div className="flex flex-1 overflow-hidden">
+                <UserSidebar />
+                <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -216,8 +218,7 @@ export default function MyBookings() {
                     </AnimatePresence>
                 </Tabs>
             </main>
-
-
         </div>
+    </div>
     );
 }

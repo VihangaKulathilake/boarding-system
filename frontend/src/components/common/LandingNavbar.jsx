@@ -10,6 +10,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/common/Logo";
 
 export default function LandingNavbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -42,13 +43,13 @@ export default function LandingNavbar() {
                 {/* Brand */}
                 <Link
                     to="/"
-                    className={cn(
-                        "flex items-center gap-2 transition-colors no-underline",
-                        scrolled ? "text-primary" : "text-white"
-                    )}
+                    className="no-underline"
                 >
-                    <Home className="w-6 h-6" />
-                    <span className="text-2xl font-extrabold tracking-tight">StayMate</span>
+                    <Logo 
+                        size="lg" 
+                        variant={scrolled ? "default" : "white"} 
+                        textClassName="text-2xl font-extrabold"
+                    />
                 </Link>
 
                 {/* Desktop Nav */}
@@ -104,9 +105,8 @@ export default function LandingNavbar() {
                         </SheetTrigger>
                         <SheetContent side="right">
                             <SheetHeader>
-                                <SheetTitle className="text-left flex items-center gap-2">
-                                    <Home className="w-5 h-5 text-primary" />
-                                    <span>StayMate</span>
+                                <SheetTitle className="text-left">
+                                    <Logo />
                                 </SheetTitle>
                             </SheetHeader>
                             <div className="flex flex-col gap-4 mt-8">

@@ -1,5 +1,6 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
+import UserSidebar from '../../components/common/UserSidebar';
 import { motion } from 'framer-motion';
 import {
     Plus,
@@ -68,8 +69,9 @@ export default function Maintenance() {
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
-
-            <main className="container mx-auto px-4 py-8 flex-grow">
+            <div className="flex flex-1 overflow-hidden">
+                <UserSidebar />
+                <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
                 <motion.div
                     initial="hidden"
                     animate="visible"
@@ -219,8 +221,7 @@ export default function Maintenance() {
                     </motion.div>
                 </div>
             </main>
-
-
         </div>
+    </div>
     );
 }

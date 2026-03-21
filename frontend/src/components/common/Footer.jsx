@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 import { Link } from 'react-router-dom';
+import Logo from "@/components/common/Logo";
 
 export default function Footer() {
     return (
@@ -9,11 +10,13 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Brand & Mission */}
                     <div className="space-y-6">
-                        <Link to="/" className="flex items-center gap-2 text-white no-underline group transition-opacity hover:opacity-80">
-                            <div className="bg-primary p-1.5 rounded-lg group-hover:scale-110 transition-transform duration-300">
-                                <Home className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-2xl font-black tracking-tight">StayMate</span>
+                        <Link to="/" className="no-underline group transition-opacity hover:opacity-80">
+                            <Logo 
+                                size="lg" 
+                                variant="white" 
+                                iconClassName="bg-primary p-1.5 rounded-lg group-hover:scale-110 transition-transform duration-300"
+                                textClassName="text-2xl font-black"
+                            />
                         </Link>
                         <p className="text-sm leading-relaxed max-w-xs">
                             Empowering everyone with seamless boarding experiences and transparent property management solutions.

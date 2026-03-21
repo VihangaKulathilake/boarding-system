@@ -21,7 +21,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AdminNavbar from "@/components/common/AdminNavbar";
+import UserNavbar from "@/components/common/UserNavbar";
 import Sidebar from "@/components/common/Sidebar";
+import UserSidebar from "@/components/common/UserSidebar";
+import { getCurrentUser } from "@/lib/auth";
 
 export default function Payments() {
   const [paymentsList, setPaymentsList] = React.useState([]);
@@ -59,12 +62,16 @@ export default function Payments() {
     }
   };
 
+  const role = getCurrentUser()?.role || 'tenant';
+  const Navbar = role === 'tenant' ? UserNavbar : AdminNavbar;
+  const SelectedSidebar = role === 'tenant' ? UserSidebar : Sidebar;
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans">
-      <AdminNavbar />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6 lg:p-12 space-y-12">
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col">
+      <Navbar />
+      <div className="flex flex-1 overflow-hidden">
+        <SelectedSidebar />
+        <main className="flex-1 p-6 lg:p-12 space-y-12 overflow-y-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -239,7 +246,7 @@ export default function Payments() {
         </main>
       </div>
     </div>
-  );
+    );
 }
 
 function ChevronDown(props) {

@@ -32,6 +32,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { clearAuthSession, getCurrentUser } from "@/lib/auth";
+import Logo from "@/components/common/Logo";
 
 export default function AdminNavbar() {
     const navigate = useNavigate();
@@ -55,24 +56,11 @@ export default function AdminNavbar() {
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Brand */}
                 <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 no-underline text-slate-900">
-                        <Home className="w-6 h-6 text-primary" />
-                        <span className="text-xl font-bold tracking-tight">StayMate <span className="text-xs font-normal opacity-70 ml-1 text-slate-500">Admin</span></span>
+                    <Link to="/" className="transition-opacity hover:opacity-80 no-underline">
+                        <Logo suffix="Admin" />
                     </Link>
 
-                    {/* Desktop Main Nav */}
-                    <div className="hidden lg:flex items-center gap-1">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                to={link.href}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-slate-100 transition-colors no-underline text-slate-600 hover:text-slate-900"
-                            >
-                                <link.icon className="w-4 h-4" />
-                                {link.name}
-                            </Link>
-                        ))}
-                    </div>
+
                 </div>
 
                 <div className="flex items-center gap-4">

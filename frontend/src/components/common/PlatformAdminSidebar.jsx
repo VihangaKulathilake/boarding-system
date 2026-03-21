@@ -7,6 +7,7 @@ const links = [
   { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { name: "Landlords", href: "/admin/landlords", icon: Building2 },
   { name: "Tenants", href: "/admin/tenants", icon: Users },
+  { name: "Boardings", href: "/admin/boardings", icon: Building2 },
 ];
 
 export default function PlatformAdminSidebar() {
@@ -26,7 +27,9 @@ export default function PlatformAdminSidebar() {
               to={item.href}
               className={cn(
                 "flex items-center justify-between rounded-xl px-4 py-3 no-underline transition-colors",
-                active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                active
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
               <span className="inline-flex items-center gap-3 font-bold">

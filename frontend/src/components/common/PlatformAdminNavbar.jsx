@@ -14,11 +14,13 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { clearAuthSession, getCurrentUser } from "@/lib/auth";
+import Logo from "@/components/common/Logo";
 
 const links = [
   { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { name: "Landlords", href: "/admin/landlords", icon: Building2 },
   { name: "Tenants", href: "/admin/tenants", icon: Users },
+  { name: "Boardings", href: "/admin/boardings", icon: Building2 },
 ];
 
 export default function PlatformAdminNavbar() {
@@ -35,22 +37,9 @@ export default function PlatformAdminNavbar() {
     <nav className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
-          <Link to="/admin/dashboard" className="inline-flex items-center gap-2 no-underline text-slate-900 hover:opacity-90">
-            <ShieldCheck className="w-6 h-6 text-emerald-500" />
-            <span className="font-black tracking-tight text-xl">StayMate Console</span>
+          <Link to="/admin/dashboard" className="no-underline hover:opacity-90">
+            <Logo suffix="Admin" iconClassName="text-emerald-500" />
           </Link>
-          <div className="hidden lg:flex items-center gap-1">
-            {links.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 no-underline transition-colors"
-              >
-                <item.icon className="w-4 h-4" />
-                {item.name}
-              </Link>
-            ))}
-          </div>
         </div>
 
         <div className="flex items-center gap-3">

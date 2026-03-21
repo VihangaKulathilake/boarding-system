@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BadgeCheck, 
@@ -13,7 +14,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ArrowUpRight,
-  Fingerprint
+  Fingerprint,
+  Clock3
 } from "lucide-react";
 import PlatformAdminNavbar from "@/components/common/PlatformAdminNavbar";
 import PlatformAdminSidebar from "@/components/common/PlatformAdminSidebar";
@@ -29,12 +31,25 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
+
 export default function AdminTenants() {
   const [tenantsList, setTenantsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchTenants();
   }, []);
 
@@ -55,31 +70,17 @@ export default function AdminTenants() {
     t.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans">
+    <div className="min-h-screen bg-[#f8fafc] font-sans selection:bg-indigo-100 selection:text-indigo-900">
       <PlatformAdminNavbar />
       <div className="flex">
         <PlatformAdminSidebar />
         <main className="flex-1 p-6 lg:p-12 space-y-10">
+          
           {/* Header */}
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
             className="flex flex-col xl:flex-row xl:items-end justify-between gap-8"
           >
             <div className="space-y-1">
@@ -89,7 +90,7 @@ export default function AdminTenants() {
               </div>
               <h1 className="text-5xl font-black tracking-tight text-slate-900 mt-2">Manage <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Tenants</span></h1>
               <p className="text-slate-500 font-medium max-w-lg">
-                Verified identity matching, trust score monitoring, and global residence policy enforcement.
+                Verified identity matching, trust score monitoring, and global residence policy enforcement across the network nodes.
               </p>
             </div>
             
@@ -103,122 +104,139 @@ export default function AdminTenants() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button variant="outline" className="h-14 px-6 rounded-[1.25rem] border-slate-200 bg-white grid place-items-center">
+              <Button variant="outline" className="h-14 px-6 rounded-[1.25rem] border-slate-200 bg-white grid place-items-center hover:bg-slate-50 transition-all">
                 <Filter className="w-5 h-5 text-slate-400" />
               </Button>
             </div>
           </motion.div>
 
-          {/* Quick Stats Banner */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-             {[
-               { label: "Total Residents", val: "2,184", icon: UserRound, color: "text-blue-500" },
-               { label: "Verified Scale", val: "84%", icon: BadgeCheck, color: "text-emerald-500" },
-               { label: "Risk Signals", val: "03", icon: ShieldAlert, color: "text-rose-500" },
-               { label: "Avg Trust Score", val: "88", icon: Fingerprint, color: "text-indigo-500" },
-             ].map((stat, i) => (
-               <Card key={i} className="rounded-3xl border-0 shadow-sm p-5 bg-white flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl bg-slate-50 ${stat.color} flex items-center justify-center`}>
-                     <stat.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{stat.label}</p>
-                     <p className="text-xl font-black text-slate-900 mt-0.5">{stat.val}</p>
-                  </div>
-               </Card>
-             ))}
+          {/* Controls Bar */}
+          <div className="flex items-center justify-between bg-white p-4 rounded-[1.5rem] shadow-sm border border-slate-50">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" className="rounded-xl font-black text-[10px] uppercase tracking-widest text-indigo-600 bg-indigo-50">
+                All Residents ({tenantsList.length})
+              </Button>
+              <Button variant="ghost" className="rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-600">
+                Verified ({tenantsList.filter(t => t.isVerified).length || 0})
+              </Button>
+              <Button variant="ghost" className="rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-600">
+                Awaiting Audit ({tenantsList.filter(t => !t.isVerified).length || 0})
+              </Button>
+            </div>
+            <Button variant="ghost" className="rounded-xl flex items-center gap-2 text-slate-400 font-bold">
+              <Filter className="w-4 h-4" /> Filter <ChevronDown className="w-4 h-4" />
+            </Button>
           </div>
 
-          {/* Directory List */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-6"
-          >
-            {loading && <p className="text-center p-12 text-slate-400 font-bold">Scanning tenant signatures...</p>}
-            {!loading && filteredTenants.map((tenant) => (
-              <motion.div key={tenant._id} variants={itemVariants}>
-                <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 bg-white group hover:shadow-2xl transition-all duration-500 overflow-hidden border-b-8 border-transparent hover:border-indigo-600">
-                  <div className="p-8 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                     <div className="flex items-center gap-8 flex-1">
-                        <div className="relative group">
-                           <div className="w-20 h-20 rounded-[1.75rem] border-4 border-slate-100 bg-slate-50 flex items-center justify-center text-3xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                              {tenant.name?.[0] || "?"}
-                           </div>
-                           {tenant.verified && (
-                             <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 border-4 border-white flex items-center justify-center text-white shadow-lg">
-                                <CheckCircle2 className="w-4 h-4" />
+          {/* Directory List Container */}
+          {loading ? (
+             <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                <motion.div 
+                  animate={{ rotate: 360 }} 
+                  transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                  className="w-10 h-10 border-4 border-t-indigo-600 border-slate-200 rounded-full"
+                />
+                <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Scanning tenant signatures...</p>
+             </div>
+          ) : (
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-6"
+            >
+              {filteredTenants.map((tenant) => (
+                <motion.div key={tenant._id} variants={itemVariants}>
+                  <Card className="rounded-[2.5rem] border-0 shadow-lg shadow-slate-200/40 bg-white group hover:shadow-2xl transition-all duration-500 overflow-hidden border-l-8 border-transparent hover:border-indigo-600">
+                    <div className="p-8 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+                       <div className="flex items-center gap-8 flex-1">
+                          <div className="relative group/avatar">
+                             <div className="w-20 h-20 rounded-[1.75rem] border-4 border-slate-100 bg-slate-50 flex items-center justify-center text-3xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                                {tenant.name?.[0] || "?"}
                              </div>
-                           )}
-                        </div>
-                        <div className="space-y-2">
-                           <div className="flex items-center gap-4">
-                              <h3 className="text-2xl font-black text-slate-900 leading-none group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{tenant.name}</h3>
-                              <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-2 py-0 border-none uppercase ${tenant.verified ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
-                                 {tenant.verified ? 'ID MATCHED' : 'UNVERIFIED'}
-                              </Badge>
-                           </div>
-                           <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-slate-400">
-                              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-indigo-400" /> {tenant.email}</span>
-                              <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-violet-400" /> {tenant.phone}</span>
-                               <span className="flex items-center gap-1.5 font-black text-[10px] uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md">REF: {tenant._id.substring(0, 8)}</span>
-                           </div>
-                        </div>
-                     </div>
+                             {tenant.isVerified && (
+                               <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 border-4 border-white flex items-center justify-center text-white shadow-lg">
+                                  <CheckCircle2 className="w-4 h-4" />
+                               </div>
+                             )}
+                          </div>
+                          <div className="space-y-2">
+                             <div className="flex items-center gap-4">
+                                <h3 className="text-2xl font-black text-slate-900 leading-none group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{tenant.name}</h3>
+                                <Badge className={`font-black tracking-widest text-[10px] rounded-lg px-2 py-0 border-none uppercase ${tenant.isVerified ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+                                   {tenant.isVerified ? 'ID MATCHED' : 'UNVERIFIED'}
+                                </Badge>
+                             </div>
+                             <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-slate-400">
+                                <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-indigo-400" /> {tenant.email}</span>
+                                <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-violet-400" /> {tenant.phone || 'Not provided'}</span>
+                                <span className="flex items-center gap-1.5"><Clock3 className="w-4 h-4 text-slate-300" /> Member since {new Date(tenant.createdAt).getFullYear()}</span>
+                             </div>
+                          </div>
+                       </div>
 
-                     <div className="flex flex-wrap items-center gap-12 border-t xl:border-t-0 xl:border-l border-slate-50 pt-8 xl:pt-0 xl:pl-12 w-full xl:w-auto">
-                        <div className="space-y-2 text-center">
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Trust Score</p>
-                           <p className={`text-4xl font-black ${tenant.score > 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{tenant.score}</p>
-                           <div className="h-1.5 w-24 bg-slate-50 rounded-full overflow-hidden mx-auto">
-                              <div className={`h-full ${tenant.score > 80 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${tenant.score}%` }}></div>
-                           </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 ml-auto xl:ml-0">
-                           <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-xl hover:shadow-indigo-200 transition-all flex items-center gap-3 active:scale-95 group/btn">
-                              Open Profile <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                           </Button>
-                           <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                 <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-slate-100 hover:bg-slate-50">
-                                    <MoreVertical className="w-5 h-5 text-slate-400" />
-                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-2xl p-2 border-slate-100 shadow-2xl">
-                                 <DropdownMenuItem className="rounded-xl font-bold p-3 cursor-pointer">Verify Identity</DropdownMenuItem>
-                                 <DropdownMenuItem className="rounded-xl font-bold p-3 cursor-pointer">Block Account</DropdownMenuItem>
-                                 <DropdownMenuItem className="rounded-xl font-bold p-3 cursor-pointer text-rose-600">Impersonation Flag</DropdownMenuItem>
-                              </DropdownMenuContent>
-                           </DropdownMenu>
-                        </div>
-                     </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
+                       <div className="flex flex-wrap items-center gap-12 border-t xl:border-t-0 xl:border-l border-slate-50 pt-8 xl:pt-0 xl:pl-12 w-full xl:w-auto">
+                          <div className="space-y-2 text-center min-w-[100px]">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Trust Score</p>
+                             <p className={`text-4xl font-black ${(tenant.score || 100) > 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{tenant.score || 100}</p>
+                             <div className="h-1.5 w-24 bg-slate-50 rounded-full overflow-hidden mx-auto">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${tenant.score || 100}%` }}
+                                  className={`h-full ${(tenant.score || 100) > 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                />
+                             </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 ml-auto xl:ml-0">
+                             <Link to={`/admin/users/${tenant._id}`}>
+                                <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-xl hover:shadow-indigo-200 transition-all flex items-center gap-3 active:scale-95 group/btn">
+                                   Audit Profile <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                </Button>
+                             </Link>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                   <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-slate-100 hover:bg-slate-50">
+                                      <MoreVertical className="w-5 h-5 text-slate-400" />
+                                   </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="rounded-2xl p-2 border-slate-100 shadow-2xl font-sans">
+                                   <DropdownMenuItem className="rounded-xl font-bold p-3 cursor-pointer text-emerald-600">Verify Identity</DropdownMenuItem>
+                                   <DropdownMenuItem className="rounded-xl font-bold p-3 cursor-pointer">Block Account</DropdownMenuItem>
+                                   <DropdownMenuItem className="rounded-xl font-bold p-3 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50">Flag Impersonation</DropdownMenuItem>
+                                </DropdownMenuContent>
+                             </DropdownMenu>
+                          </div>
+                       </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
 
           {/* Compliance & Policy Footer */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="p-10 rounded-[3rem] bg-white border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-10 shadow-sm"
+            className="p-10 rounded-[3rem] bg-indigo-600 text-white flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl shadow-indigo-200/50 relative overflow-hidden group"
           >
-             <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                   <ShieldAlert className="w-8 h-8" />
+             <div className="absolute top-0 left-0 w-full h-full bg-black/5" />
+             <div className="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000" />
+             
+             <div className="relative z-10 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-[1.5rem] bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                   <ShieldAlert className="w-8 h-8 text-indigo-200" />
                 </div>
                 <div className="space-y-1">
-                   <h4 className="text-xl font-black text-slate-900 tracking-tight">System Policy Compliance</h4>
-                   <p className="text-slate-400 font-medium max-w-sm">Tenant data is encrypted and handled according to global privacy standards.</p>
+                   <h4 className="text-xl font-black tracking-tight">System Policy Compliance</h4>
+                   <p className="text-indigo-100 font-medium max-w-sm">Resident data is encrypted and managed according to global privacy standards.</p>
                 </div>
              </div>
-             <div className="flex items-center gap-4 w-full md:w-auto">
-                <Button variant="ghost" className="font-black text-indigo-600 hover:bg-indigo-50 h-14 px-8 rounded-2xl">Privacy Audit</Button>
-                <Button className="bg-slate-900 text-white font-black h-14 px-8 rounded-2xl hover:bg-slate-800 transition-all shadow-xl">Data Policy</Button>
+             <div className="relative z-10 flex items-center gap-4 w-full md:w-auto">
+                <Button variant="ghost" className="font-black text-white hover:bg-white/10 h-14 px-8 rounded-2xl">Privacy Audit</Button>
+                <Button className="bg-white text-indigo-600 font-black h-14 px-8 rounded-2xl hover:bg-slate-50 transition-all shadow-xl">Data Policy</Button>
              </div>
           </motion.div>
         </main>

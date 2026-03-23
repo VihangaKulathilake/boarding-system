@@ -3,11 +3,12 @@ import Payment from "../models/payment.js";
 import Booking from "../models/booking.js";
 import Boarding from "../models/boarding.js";
 import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
+import { PaymentContext, StrategyFactory } from "../services/payment/PaymentStrategy.js";
 
-// Create a new payment (manual record)
+// Create a new payment (manual record or gateway)
 export const createPayment = async (req, res) => {
     try {
-        const { bookingId, amount, transactionId, status } = req.body;
+        const { bookingId, amount, transactionId, status, gateway } = req.body;
 
         if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) {
             return res.status(400).json({ message: "Valid bookingId is required" });
@@ -26,21 +27,28 @@ export const createPayment = async (req, res) => {
             return res.status(403).json({ message: "Forbidden" });
         }
 
-        const payment = await Payment.create({
+        const paymentData = {
             boarding: booking.boarding._id,
             user: booking.tenant,
             amount: amount || booking.payment?.amount, // Default to booking amount if not provided
             transactionId,
             status: status || "pending",
-        });
+        };
+
+        // Initialize Strategy Design Pattern Context
+        const strategy = StrategyFactory.getStrategy(gateway);
+        const paymentContext = new PaymentContext(strategy);
+
+        // Execute payment strategy and capture its tailored response
+        const strategyResult = await paymentContext.executePayment(paymentData);
 
         // Link payment to booking
-        booking.payment = payment._id;
+        booking.payment = strategyResult.payment._id;
         await booking.save();
 
         return res.status(201).json({
-            message: "Payment recorded successfully",
-            payment,
+            message: `Payment initiated successfully using ${gateway || 'cash'} strategy`,
+            ...strategyResult
         });
     } catch (error) {
         console.error("Error creating payment:", error);

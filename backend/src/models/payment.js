@@ -21,10 +21,21 @@ const paymentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "completed", "failed"],
+      enum: ["pending", "processing", "completed", "failed"],
       default: "pending",
     },
-    
+
+    method: {
+      type: String,
+      enum: ["cash", "paypal", "unknown"],
+      default: "unknown",
+    },
+
+    metadata: {
+      type: Object,
+      default: {},
+    },
+
     transactionId: {
       type: String,
       unique: true,

@@ -12,7 +12,7 @@ const router = express.Router();
 
 router
     .route("/")
-    .post(protect, authorizeRoles("admin", "landlord"), createBooking)
+    .post(protect, authorizeRoles("tenant"), createBooking)
     .get(protect, getBookings);
 
 router

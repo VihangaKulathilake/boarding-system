@@ -3,7 +3,7 @@ import Boarding from "../models/boarding.js";
 import Room from "../models/room.js";
 import Booking from "../models/booking.js";
 import Payment from "../models/payment.js";
-import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";     
+import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
 
 // Create a new booking
 export const createBooking = async (req, res) => {
@@ -92,6 +92,9 @@ export const createBooking = async (req, res) => {
       boarding: boardingId,
       user: resolvedTenantId,
       amount: totalAmount,
+      // Temporary we set method to cash and status to pending when create booking
+      // We will implement the payment gateway later
+      method: "cash",
       status: "pending",
     });
 

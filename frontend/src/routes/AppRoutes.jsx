@@ -13,6 +13,7 @@ import AddTenant from '../pages/tenant/AddTenant';
 import Payments from '../pages/payment/Payments';
 import Marketplace from '../pages/client/Marketplace';
 import BoardingDetails from '../pages/client/BoardingDetails';
+import RoomDetails from '../pages/client/RoomDetails';
 import MyBookings from '../pages/client/MyBookings';
 import Maintenance from '../pages/client/Maintenance';
 import Profile from '../pages/client/Profile';
@@ -38,6 +39,7 @@ export default function AppRoutes() {
                 <Route path="/client-home" element={<ClientHome />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/boarding/:id" element={<BoardingDetails />} />
+                <Route path="/boarding/:id/room/:roomId" element={<RoomDetails />} />
                 <Route path="/my-bookings" element={<MyBookings />} />
                 <Route path="/maintenance" element={<Maintenance />} />
             </Route>

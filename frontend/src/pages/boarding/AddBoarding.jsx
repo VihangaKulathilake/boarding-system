@@ -30,20 +30,25 @@ import {
   MapPin
 } from "lucide-react";
 
-const AVAILABLE_FACILITIES = [
-  { name: "Free WiFi", icon: Wifi },
-  { name: "Study Desks", icon: BookOpen },
-  { name: "Attached Bathroom", icon: Bath },
-  { name: "Kitchen Access", icon: Coffee },
-  { name: "Laundry / Ironing", icon: Shirt },
+const PROPERTY_FACILITIES = [
+  { name: "Parking Space", icon: Car },
   { name: "CCTV / Security", icon: Shield },
   { name: "Filtered Water", icon: Droplets },
-  { name: "Separate Entrance", icon: DoorOpen },
+  { name: "Laundry / Shared Ironing", icon: Shirt },
   { name: "Near Bus Route", icon: Bus },
   { name: "Quiet Environment", icon: VolumeX },
-  { name: "Parking Space", icon: Car },
-  { name: "Air Conditioning", icon: Wind },
 ];
+
+const ROOM_FACILITIES = [
+  { name: "Air Conditioning", icon: Wind },
+  { name: "Free WiFi", icon: Wifi },
+  { name: "Attached Bathroom", icon: Bath },
+  { name: "Private Kitchen", icon: Coffee },
+  { name: "Study Desks", icon: BookOpen },
+  { name: "Separate Entrance", icon: DoorOpen },
+];
+
+const AVAILABLE_FACILITIES = [...PROPERTY_FACILITIES, ...ROOM_FACILITIES];
 
 export default function AddBoarding() {
   const navigate = useNavigate();
@@ -60,7 +65,7 @@ export default function AddBoarding() {
     latitude: "",
     longitude: "",
     facilities: [],
-    rooms: [{ roomNumber: "", description: "", price: "", capacity: "", images: [] }], // Initial room for room_based
+    rooms: [{ roomNumber: "", description: "", price: "", capacity: "", images: [], facilities: [] }], // Initial room for room_based
   });
 
   const onChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -71,7 +76,7 @@ export default function AddBoarding() {
   const addRoom = () => {
     setForm(p => ({
       ...p,
-      rooms: [...p.rooms, { roomNumber: "", description: "", price: "", capacity: "", images: [] }]
+      rooms: [...p.rooms, { roomNumber: "", description: "", price: "", capacity: "", images: [], facilities: [] }]
     }));
   };
 
@@ -97,6 +102,23 @@ export default function AddBoarding() {
         return { ...p, facilities: p.facilities.filter(f => f !== facilityName) };
       }
       return { ...p, facilities: [...p.facilities, facilityName] };
+    });
+  };
+
+  const toggleRoomFacility = (index, facilityName) => {
+    setForm(p => {
+      const newRooms = [...p.rooms];
+      const room = newRooms[index];
+      const facilities = room.facilities || [];
+      const exists = facilities.includes(facilityName);
+      
+      if (exists) {
+        newRooms[index] = { ...room, facilities: facilities.filter(f => f !== facilityName) };
+      } else {
+        newRooms[index] = { ...room, facilities: [...facilities, facilityName] };
+      }
+      
+      return { ...p, rooms: newRooms };
     });
   };
 
@@ -278,6 +300,30 @@ export default function AddBoarding() {
                                   onUploadComplete={(urls) => onRoomChange(index, 'images', urls)} 
                                />
                             </div>
+
+                            <div className="space-y-4 pt-4 border-t border-slate-50">
+                              <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Room-Specific Facilities</Label>
+                              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                                {ROOM_FACILITIES.map((facility) => {
+                                  const Icon = facility.icon;
+                                  const isSelected = (room.facilities || []).includes(facility.name);
+                                  return (
+                                    <div
+                                      key={facility.name}
+                                      onClick={() => toggleRoomFacility(index, facility.name)}
+                                      className={`flex items-center gap-2 p-2.5 rounded-xl border border-dashed cursor-pointer transition-all active:scale-95 ${isSelected
+                                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700'
+                                        : 'bg-slate-50/50 border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                      <span className="text-[11px] font-bold flex-1">{facility.name}</span>
+                                      {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -291,9 +337,11 @@ export default function AddBoarding() {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-50">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Facilities & Shared Amenities</Label>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    {AVAILABLE_FACILITIES.map((facility) => {
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    {form.type === 'full_property' ? 'Facilities & Amenities' : 'Property-Level Facilities & Shared Amenities'}
+                  </Label>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    {(form.type === 'full_property' ? AVAILABLE_FACILITIES : PROPERTY_FACILITIES).map((facility) => {
                       const Icon = facility.icon;
                       const isSelected = form.facilities.includes(facility.name);
                       return (

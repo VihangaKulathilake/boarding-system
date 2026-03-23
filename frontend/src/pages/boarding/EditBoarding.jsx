@@ -7,10 +7,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, MapPin } from "lucide-react";
+import { Plus, Trash2, MapPin, Wifi, Wind, Car, Shield, Coffee, Check, BookOpen, Bath, Shirt, Droplets, DoorOpen, Bus, VolumeX } from "lucide-react";
 import { getBoardingById, updateBoarding } from "@/api/boardings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MapPicker from "@/components/common/MapPicker";
+import ImageUpload from "@/components/common/ImageUpload";
+
+const PROPERTY_FACILITIES = [
+  { name: "Parking Space", icon: Car },
+  { name: "CCTV / Security", icon: Shield },
+  { name: "Filtered Water", icon: Droplets },
+  { name: "Laundry / Shared Ironing", icon: Shirt },
+  { name: "Near Bus Route", icon: Bus },
+  { name: "Quiet Environment", icon: VolumeX },
+];
+
+const ROOM_FACILITIES = [
+  { name: "Air Conditioning", icon: Wind },
+  { name: "Free WiFi", icon: Wifi },
+  { name: "Attached Bathroom", icon: Bath },
+  { name: "Private Kitchen", icon: Coffee },
+  { name: "Study Desks", icon: BookOpen },
+  { name: "Separate Entrance", icon: DoorOpen },
+];
+
+const AVAILABLE_FACILITIES = [...PROPERTY_FACILITIES, ...ROOM_FACILITIES];
 
 export default function EditBoarding() {
   const { id } = useParams();
@@ -27,6 +48,8 @@ export default function EditBoarding() {
     description: "",
     latitude: "",
     longitude: "",
+    facilities: [],
+    images: [],
     rooms: [], // Existing rooms for room_based
   });
 
@@ -48,6 +71,8 @@ export default function EditBoarding() {
         description: data.description,
         latitude: data.location?.coordinates[1]?.toString() || "",
         longitude: data.location?.coordinates[0]?.toString() || "",
+        facilities: data.facilities || [],
+        images: data.images || [],
         rooms: data.rooms || [],
       });
     } catch (error) {
@@ -64,7 +89,7 @@ export default function EditBoarding() {
   const addRoom = () => {
     setForm(p => ({
       ...p,
-      rooms: [...(p.rooms || []), { roomNumber: "", description: "", price: "", capacity: 1, images: [] }]
+      rooms: [...(p.rooms || []), { roomNumber: "", description: "", price: "", capacity: 1, images: [], facilities: [] }]
     }));
   };
 
@@ -79,6 +104,34 @@ export default function EditBoarding() {
     setForm(p => {
       const newRooms = [...p.rooms];
       newRooms[index] = { ...newRooms[index], [field]: value };
+      return { ...p, rooms: newRooms };
+    });
+  };
+
+  const toggleFacility = (facilityName) => {
+    setForm(p => {
+      const facilities = p.facilities || [];
+      const exists = facilities.includes(facilityName);
+      if (exists) {
+        return { ...p, facilities: facilities.filter(f => f !== facilityName) };
+      }
+      return { ...p, facilities: [...facilities, facilityName] };
+    });
+  };
+
+  const toggleRoomFacility = (index, facilityName) => {
+    setForm(p => {
+      const newRooms = [...p.rooms];
+      const room = newRooms[index];
+      const facilities = room.facilities || [];
+      const exists = facilities.includes(facilityName);
+      
+      if (exists) {
+        newRooms[index] = { ...room, facilities: facilities.filter(f => f !== facilityName) };
+      } else {
+        newRooms[index] = { ...room, facilities: [...facilities, facilityName] };
+      }
+      
       return { ...p, rooms: newRooms };
     });
   };
@@ -260,13 +313,63 @@ export default function EditBoarding() {
                                   onUploadComplete={(urls) => onRoomChange(index, 'images', urls)} 
                                />
                             </div>
+
+                            <div className="space-y-4 pt-4 border-t border-slate-50">
+                              <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Room-Specific Facilities</Label>
+                              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                                {ROOM_FACILITIES.map((facility) => {
+                                  const Icon = facility.icon;
+                                  const isSelected = (room.facilities || []).includes(facility.name);
+                                  return (
+                                    <div
+                                      key={facility.name}
+                                      onClick={() => toggleRoomFacility(index, facility.name)}
+                                      className={`flex items-center gap-2 p-2.5 rounded-xl border border-dashed cursor-pointer transition-all active:scale-95 ${isSelected
+                                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700'
+                                        : 'bg-slate-50/50 border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                      <span className="text-[11px] font-bold flex-1">{facility.name}</span>
+                                      {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                <div className="space-y-2">
+                <div className="space-y-4 pt-4 border-t border-slate-50">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    {form.type === 'full_property' ? 'Facilities & Amenities' : 'Property-Level Facilities & Shared Amenities'}
+                  </Label>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    {(form.type === 'full_property' ? AVAILABLE_FACILITIES : PROPERTY_FACILITIES).map((facility) => {
+                      const Icon = facility.icon;
+                      const isSelected = (form.facilities || []).includes(facility.name);
+                      return (
+                        <div
+                          key={facility.name}
+                          onClick={() => toggleFacility(facility.name)}
+                          className={`flex items-center gap-2.5 p-3 rounded-[1rem] border-2 cursor-pointer transition-all active:scale-95 ${isSelected
+                            ? 'bg-indigo-50/50 border-indigo-500 text-indigo-700 shadow-[0_4px_14px_rgba(99,102,241,0.15)]'
+                            : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-100 hover:bg-slate-50 shadow-sm'
+                            }`}
+                        >
+                          <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
+                          <span className="text-sm font-bold flex-1">{facility.name}</span>
+                          {isSelected && <Check className="w-4 h-4 text-indigo-600" />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-4 border-t border-slate-50">
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" rows={5} value={form.description} onChange={onChange} />
                 </div>

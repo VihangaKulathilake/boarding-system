@@ -110,6 +110,7 @@ export const createBoarding = async (req, res) => {
         const roomsData = rooms.map(room => ({
           boarding: boarding._id,
           roomNumber: room.roomNumber,
+          description: room.description || "",
           price: Number(room.price),
           capacity: Number(room.capacity),
           facilities: normalizeStringArray(room.facilities) || [],
@@ -466,6 +467,7 @@ export const updateBoarding = async (req, res) => {
           const roomData = {
             boarding: id,
             roomNumber: room.roomNumber,
+            description: room.description || "",
             price: Number(room.price),
             capacity: Number(room.capacity),
             facilities: normalizeStringArray(room.facilities) || [],

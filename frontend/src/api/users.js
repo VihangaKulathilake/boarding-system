@@ -63,7 +63,7 @@ export const getUserByRole = async (role) => {
 
 export const getCurrentUser = async () => {
   try {
-    const { data } = await axiosInstance.get(`${USERS_BASE}/current-user`);
+    const { data } = await axiosInstance.get(`${USERS_BASE}/me`);
     return data;
   } catch (error) {
     throw toApiError(error, "Failed to fetch current user.");

@@ -31,11 +31,21 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { clearAuthSession } from "@/lib/auth";
+import { clearAuthSession, getCurrentUser } from "@/lib/auth";
 import Logo from "@/components/common/Logo";
 
 export default function UserNavbar() {
     const navigate = useNavigate();
+    const user = getCurrentUser();
+
+    const getInitials = (name) => {
+        if (!name) return "U";
+        const parts = name.trim().split(/\s+/);
+        if (parts.length > 1) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
 
     const handleLogout = () => {
         clearAuthSession();
@@ -82,7 +92,9 @@ export default function UserNavbar() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden hover:bg-slate-100">
                                 <Avatar className="h-9 w-9 border border-slate-200">
-                                    <AvatarFallback className="bg-primary/10 text-primary">JD</AvatarFallback>
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                                        {getInitials(user?.name)}
+                                    </AvatarFallback>
                                 </Avatar>
                             </Button>
                         </DropdownMenuTrigger>

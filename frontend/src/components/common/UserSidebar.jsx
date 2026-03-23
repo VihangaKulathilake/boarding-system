@@ -23,7 +23,7 @@ export default function UserSidebar() {
     ];
 
     return (
-        <aside className="w-64 bg-white border-r border-slate-100 hidden lg:flex flex-col flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
+        <aside className="w-64 bg-white border-r border-slate-100 hidden lg:flex flex-col flex-shrink-0 h-full">
             <div className="flex-grow py-6 px-4 space-y-2 overflow-y-auto">
                 <div className="px-4 mb-4">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tenant Portal</span>

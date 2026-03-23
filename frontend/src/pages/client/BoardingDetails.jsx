@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     MapPin, Star, Wifi, Wind, Car, Zap, CheckCircle2,
     Calendar, Phone, MessageCircle, ArrowLeft, Heart,
-    Share2, Info, ChevronRight, Home, Layout, Mail, ExternalLink, Activity,
+    Share2, Info, ChevronLeft, ChevronRight, Search, Home, Layout, Mail, ExternalLink, Activity,
     BookOpen, Bath, Shirt, Droplets, DoorOpen, Bus, VolumeX, Shield, Coffee,
     X, Image as ImageIcon
 } from "lucide-react";
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useParams } from 'react-router-dom';
 import { getBoardingById } from "@/api/boardings";
+import BookingModal from '@/components/booking/BookingModal';
 
 // Animation Variants
 const fadeInUp = {
@@ -35,6 +36,23 @@ export default function BoardingDetails() {
     const [loading, setLoading] = React.useState(true);
     const [selectedImage, setSelectedImage] = React.useState(null);
     const [activeImage, setActiveImage] = React.useState(0);
+    const [isBookingModalOpen, setIsBookingModalOpen] = React.useState(false);
+    const [selectedRoomToBook, setSelectedRoomToBook] = React.useState(null);
+
+    const openBooking = (room = null) => {
+        setSelectedRoomToBook(room);
+        setIsBookingModalOpen(true);
+    };
+
+    const nextImage = (e) => {
+        e.stopPropagation();
+        setActiveImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    };
+
+    const prevImage = (e) => {
+        e.stopPropagation();
+        setActiveImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    };
 
     React.useEffect(() => {
         fetchBoarding();
@@ -81,6 +99,10 @@ export default function BoardingDetails() {
     );
 
     // Map real data intelligently
+    const displayPrice = boarding.type === 'room_based' && boarding.rooms?.length > 0
+        ? Math.min(...boarding.rooms.map(r => r.price || Infinity).filter(p => p !== Infinity))
+        : boarding.price;
+        
     const amenities = boarding.facilities && boarding.facilities.length > 0 ? boarding.facilities : boarding.amenities || [];
     const images = boarding.images && boarding.images.length > 0 ? boarding.images : ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&auto=format&fit=crop&q=80']; // Only fallback if array is literally empty
     const ownerName = boarding.owner?.name || `${boarding.owner?.firstName || 'Landlord'} ${boarding.owner?.lastName || ''}`.trim();
@@ -140,9 +162,12 @@ export default function BoardingDetails() {
                         animate="visible"
                         className="lg:col-span-2 space-y-12"
                     >
-                        {/* Cinematic Image Gallery */}
-                        <motion.div variants={fadeInUp} className="space-y-4">
-                            <div className="relative w-full aspect-[4/3] md:aspect-[21/9] rounded-[2rem] overflow-hidden shadow-2xl bg-slate-900 group">
+                        {/* Cinematic Image Gallery Carousel */}
+                        <motion.div variants={fadeInUp} className="w-full h-[45vh] md:h-[55vh] overflow-hidden rounded-[2.5rem] shadow-2xl relative bg-slate-900 group">
+                            <div 
+                                className="relative w-full h-full cursor-pointer"
+                                onClick={() => setSelectedImage(images[activeImage])}
+                            >
                                 <motion.img 
                                     key={activeImage}
                                     initial={{ opacity: 0.5, scale: 1.02 }}
@@ -150,34 +175,53 @@ export default function BoardingDetails() {
                                     transition={{ duration: 0.6, ease: "easeOut" }}
                                     src={images[activeImage]} 
                                     alt={boarding.boardingName}
-                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                                    className="w-full h-full object-cover transition-opacity duration-500 group-hover:scale-105" 
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                                <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
-                                    <Badge className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border-none px-4 py-1.5 rounded-xl text-xs tracking-widest uppercase font-black">
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-slate-900/10 z-10 pointer-events-none" />
+                                
+                                {/* Carousel Controls */}
+                                {images.length > 1 && (
+                                    <>
+                                        <button 
+                                            onClick={prevImage}
+                                            className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-black/20 hover:bg-white text-white hover:text-indigo-600 backdrop-blur-md rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-lg border border-white/20"
+                                        >
+                                            <ChevronLeft className="w-6 h-6" />
+                                        </button>
+                                        <button 
+                                            onClick={nextImage}
+                                            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-black/20 hover:bg-white text-white hover:text-indigo-600 backdrop-blur-md rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-lg border border-white/20"
+                                        >
+                                            <ChevronRight className="w-6 h-6" />
+                                        </button>
+                                        
+                                        {/* Pagination Indicators */}
+                                        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-sm">
+                                            {images.map((_, idx) => (
+                                                <div 
+                                                    key={idx} 
+                                                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                                                        activeImage === idx ? 'w-6 bg-white' : 'w-2 bg-white/40'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                                
+                                <div className="absolute bottom-6 left-8 right-8 z-20 pointer-events-none">
+                                    <Badge className="bg-white/20 text-white backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-xl text-[10px] tracking-widest uppercase font-black shadow-sm inline-block">
                                         {boarding.type === "full_property" ? "Entire Property" : boarding.type?.replace("_", " ") || "Room Based"}
                                     </Badge>
-                                    {images.length > 1 && (
-                                        <div className="bg-black/50 backdrop-blur-md text-white px-4 py-1.5 rounded-xl text-xs font-black tracking-widest shadow-xl">
-                                            {activeImage + 1} / {images.length}
-                                        </div>
-                                    )}
+                                </div>
+
+                                {/* Hover Search Icon */}
+                                <div className="absolute bottom-6 right-8 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div className="w-12 h-12 bg-black/30 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 hover:bg-indigo-600 transition-colors shadow-lg">
+                                        <Search className="w-5 h-5 pointer-events-none" />
+                                    </div>
                                 </div>
                             </div>
-                            {/* Thumbnails Row */}
-                            {images.length > 1 && (
-                                <div className="flex gap-3 overflow-x-auto pb-2 pt-2 no-scrollbar scroll-smooth">
-                                    {images.map((img, idx) => (
-                                        <button 
-                                            key={idx}
-                                            onClick={() => setActiveImage(idx)}
-                                            className={`relative shrink-0 w-28 h-20 rounded-[1rem] overflow-hidden transition-all duration-300 ${activeImage === idx ? 'ring-4 ring-indigo-600 ring-offset-2 ring-offset-slate-50 shadow-lg scale-100' : 'opacity-60 hover:opacity-100 scale-95 hover:scale-100'}`}
-                                        >
-                                            <img src={img} className="w-full h-full object-cover" alt={`Thumbnail ${idx+1}`} />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </motion.div>
 
                         {/* Title & Core Details */}
@@ -284,16 +328,22 @@ export default function BoardingDetails() {
                                                         {room.price.toLocaleString()}
                                                     </span>
                                                 </div>
-                                                <Button 
-                                                    disabled={!room.available} 
-                                                    className={`w-full md:w-auto rounded-2xl font-black px-10 h-14 transition-all ${
-                                                        room.available 
-                                                            ? 'bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95' 
-                                                            : 'bg-slate-200 text-slate-500 scale-95'
-                                                    }`}
-                                                >
-                                                    {room.available ? 'Reserve Now' : 'Full / Waitlist'}
-                                                </Button>
+                                                {room.available ? (
+                                                    <Link to={`/boarding/${boarding._id}/room/${room._id}`} state={{ room, boarding }} className="w-full md:w-auto">
+                                                        <Button 
+                                                            className="w-full rounded-2xl font-black px-10 h-14 transition-all bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95"
+                                                        >
+                                                            Reserve Now
+                                                        </Button>
+                                                    </Link>
+                                                ) : (
+                                                    <Button 
+                                                        disabled
+                                                        className="w-full md:w-auto rounded-2xl font-black px-10 h-14 transition-all bg-slate-200 text-slate-500 scale-95"
+                                                    >
+                                                        Full / Waitlist
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -362,9 +412,9 @@ export default function BoardingDetails() {
                                 <CardContent className="p-8 pb-10 space-y-8">
                                     {/* Price Header based strictly on DB price field */}
                                     <div>
-                                        {boarding.price ? (
+                                        {displayPrice && displayPrice !== Infinity ? (
                                             <div className="flex items-end gap-1.5 mb-4">
-                                                <span className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Rs. {boarding.price.toLocaleString()}</span>
+                                                <span className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Rs. {displayPrice.toLocaleString()}</span>
                                                 <span className="text-slate-400 font-bold mb-1.5 md:mb-2 uppercase text-xs tracking-widest">
                                                     {boarding.type === 'room_based' ? '/room' : '/month'}
                                                 </span>
@@ -373,7 +423,7 @@ export default function BoardingDetails() {
                                             <div className="text-3xl font-black text-slate-900 tracking-tighter mb-4">Price on Request</div>
                                         )}
                                         {boarding.type === 'room_based' && (
-                                            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Starting prices per available room</p>
+                                            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Starting prices from available rooms</p>
                                         )}
                                         <div className="flex flex-wrap gap-2">
                                             <Badge variant="outline" className={`border-emerald-200 bg-emerald-50 text-emerald-700 font-black px-3 py-1 text-[10px] tracking-widest uppercase`}>
@@ -398,9 +448,17 @@ export default function BoardingDetails() {
                                         </div>
                                     </div>
 
+                                    {boarding.type === 'full_property' && (
+                                        <Button 
+                                            onClick={() => openBooking(null)}
+                                            className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-[0_8px_20px_rgba(5,150,105,0.3)] transition-all transform active:scale-95 text-lg flex items-center justify-center mt-4"
+                                        >
+                                            Reserve Property
+                                        </Button>
+                                    )}
                                     <Button 
                                         onClick={() => ownerEmail ? window.location.href = `mailto:${ownerEmail}?subject=Interest%20in%20${encodeURIComponent(boarding.boardingName)}` : alert('Contact information currently unavailable.')}
-                                        className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] transition-all transform active:scale-95 text-lg flex items-center gap-2 mt-4"
+                                        className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] transition-all transform active:scale-95 text-lg flex items-center justify-center gap-2 mt-4"
                                     >
                                         <Mail className="w-5 h-5 shadow-sm" /> Contact Landlord
                                     </Button>
@@ -460,6 +518,16 @@ export default function BoardingDetails() {
                     </motion.div>
                 )}
             </AnimatePresence>
+            
+            {/* Booking Modal Instance */}
+            {boarding && (
+                <BookingModal 
+                    isOpen={isBookingModalOpen}
+                    onClose={() => setIsBookingModalOpen(false)}
+                    boarding={boarding}
+                    room={selectedRoomToBook}
+                />
+            )}
             </main>
         </div>
     </div>

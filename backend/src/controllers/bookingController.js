@@ -96,6 +96,7 @@ export const createBooking = async (req, res) => {
       // We will implement the payment gateway later
       method: "cash",
       status: "pending",
+      transactionId: `CSH_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
     });
 
     const booking = await Booking.create({

@@ -46,4 +46,7 @@ const bookingSchema = new mongoose.Schema(
   }
 );
 
+bookingSchema.index({ boarding: 1 });
+bookingSchema.index({ status: 1 });
+
 export default mongoose.model("Booking", bookingSchema);

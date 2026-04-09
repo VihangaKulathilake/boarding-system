@@ -50,4 +50,7 @@ const roomSchema = new mongoose.Schema(
   }
 );
 
+roomSchema.index({ boarding: 1 });
+roomSchema.index({ available: 1 });
+
 export default mongoose.model("Room", roomSchema);

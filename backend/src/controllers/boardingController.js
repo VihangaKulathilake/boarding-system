@@ -4,8 +4,10 @@ import Room from "../models/room.js";
 import User from "../models/User.js";
 import Payment from "../models/payment.js";
 import Booking from "../models/booking.js";
+import Review from "../models/review.js";
 import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
 import { normalizeStringArray } from "../utils/formatHelpers.js";
+import { calculateScore } from "../utils/boardingUtils.js";
 
 // Create a new boarding
 export const createBoarding = async (req, res) => {
@@ -119,7 +121,7 @@ export const createBoarding = async (req, res) => {
         }));
 
         await Room.insertMany(roomsData, { session });
-        
+
         // Update totalRooms
         boarding.totalRooms = roomsData.length;
         await boarding.save({ session });
@@ -154,7 +156,7 @@ export const getBoardings = async (req, res) => {
   try {
 
     // Extract query parameters for filtering
-    const { q, city, minPrice, maxPrice, rooms, totalRooms, status, owner, mine } = req.query;
+    const { q, city, minPrice, maxPrice, totalRooms, status, owner, mine, sortBy } = req.query;
 
     // Build the filter object based on provided query parameters
     const filter = {};
@@ -174,8 +176,6 @@ export const getBoardings = async (req, res) => {
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
-
-      // isNaN check is important to avoid adding invalid price filters that would exclude all results
       if (minPrice !== undefined && !Number.isNaN(Number(minPrice))) {
         filter.price.$gte = Number(minPrice);
       }
@@ -191,7 +191,6 @@ export const getBoardings = async (req, res) => {
       filter.totalRooms = Number(totalRooms);
     }
 
-    // Filter by status - only admins can filter by specific status, regular users only see approved boardings
     if (status) {
       if (isAdmin(req.user)) {
         filter.status = status;
@@ -199,117 +198,100 @@ export const getBoardings = async (req, res) => {
         filter.status = "approved";
       }
     }
-    // If no status filter is provided, regular users should only see approved boardings
-    // UNLESS they are filtering for their own boardings (mine=true)
     else if (!isAdmin(req.user) && mine !== "true") {
       filter.status = "approved";
     }
 
-    // If mine=true, filter by current user's boardings. Otherwise, if owner is provided, filter by that owner.
     if (mine === "true" && req.user?.id) {
       filter.owner = req.user.id;
     } else if (owner && mongoose.Types.ObjectId.isValid(owner)) {
       filter.owner = owner;
     }
 
-    // Fetch boardings based on the constructed filter, populate owner details, and sort by creation date
+    // Determine initial DB sort
+    let dbSort = { createdAt: -1 };
+    if (sortBy === "newest") dbSort = { createdAt: -1 };
+
     const boardings = await Boarding.find(filter)
       .populate("owner", "name email role")
-      .sort({ createdAt: -1 })
+      .sort(dbSort)
       .lean();
 
-    const roomBasedIds = boardings
-      .filter((boarding) => boarding.type === "room_based")
-      .map((boarding) => boarding._id);
+    if (boardings.length === 0) return res.json([]);
 
-    let roomStatsByBoarding = new Map();
-    if (roomBasedIds.length > 0) {
-      const stats = await Room.aggregate([
-        { $match: { boarding: { $in: roomBasedIds } } },
+    const boardingIds = boardings.map(b => b._id);
+
+    // Fetch Room stats, Active bookings, Review performance, AND User Prefs in parallel
+    const [stats, activeBookings, reviewStats, user] = await Promise.all([
+      Room.aggregate([
+        { $match: { boarding: { $in: boardingIds } } },
         {
           $group: {
             _id: "$boarding",
             totalRooms: { $sum: 1 },
-            availableRooms: {
-              $sum: { $cond: [{ $eq: ["$available", true] }, 1, 0] },
-            },
+            availableRooms: { $sum: { $cond: [{ $eq: ["$available", true] }, 1, 0] } },
             minPrice: { $min: "$price" },
             maxPrice: { $max: "$price" }
           },
         },
-      ]);
-
-      roomStatsByBoarding = new Map(
-        stats.map((stat) => [
-          String(stat._id),
-          { 
-            totalRooms: stat.totalRooms, 
-            availableRooms: stat.availableRooms,
-            minPrice: stat.minPrice,
-            maxPrice: stat.maxPrice 
-          },
-        ])
-      );
-    }
-
-    // For full_property type, we need to check for active bookings to determine availability
-    const fullPropertyIds = boardings
-      .filter((boarding) => boarding.type === "full_property")
-      // get all the full_property boardings id's only
-      .map((boarding) => boarding._id);
-
-    // Create an empty map to store the active bookings count for each full_property boarding
-    let fullPropertyActiveBookings = new Map();
-    if (fullPropertyIds.length > 0) {
-
-      // aggregate() does the same thing as find() but with more features
-      const activeBookings = await Booking.aggregate([
+      ]),
+      Booking.aggregate([
         {
-
-          // match the full_property boardings id's only
           $match: {
-            // match the pending and approved status only
-            boarding: { $in: fullPropertyIds },
+            boarding: { $in: boardingIds },
             status: { $in: ["pending", "approved"] }
           }
         },
-
-        // group the full_property boardings id's only and count the number of active bookings
-        // _id: "$boarding" - group by the boarding id
-        // count: { $sum: 1 } - add 1 to the count for each active booking
         { $group: { _id: "$boarding", count: { $sum: 1 } } }
-      ]);
+      ]),
+      Review.aggregate([
+        { $match: { boarding: { $in: boardingIds }, rating: { $gt: 0 } } },
+        { $group: { _id: "$boarding", avgRating: { $avg: "$rating" }, totalReviews: { $sum: 1 } } }
+      ]),
+      req.user?.id ? User.findById(req.user.id).select("preferences").lean() : null
+    ]);
 
-      // create a map of full_property boardings id's and their active bookings count
-      fullPropertyActiveBookings = new Map(
-        activeBookings.map((b) => [String(b._id), b.count])
-      );
-    }
+    const roomStatsByBoarding = new Map(stats.map(s => [String(s._id), s]));
+    const fullPropertyActiveBookings = new Map(activeBookings.map(b => [String(b._id), b.count]));
+    const reviewStatsByBoarding = new Map(reviewStats.map(r => [String(r._id), r]));
+    const preferences = user?.preferences;
 
-    const response = boardings.map((boarding) => {
+    let response = boardings.map((boarding) => {
+      const bId = String(boarding._id);
+      const reviews = reviewStatsByBoarding.get(bId) || { avgRating: 0, totalReviews: 0 };
+      
+      let enriched = {
+        ...boarding,
+        rating: reviews.avgRating ? Number(reviews.avgRating.toFixed(1)) : 0,
+        totalReviews: reviews.totalReviews
+      };
+
       if (boarding.type === "room_based") {
-        const stats = roomStatsByBoarding.get(String(boarding._id)) || {
-          totalRooms: 0,
-          availableRooms: 0,
-          minPrice: 0
-        };
-        return {
-          ...boarding,
-          totalRooms: stats.totalRooms,
-          availableRooms: stats.availableRooms,
-          price: stats.minPrice // Set price to minPrice for room_based for marketplace display
-        };
-      } else if (boarding.type === "full_property") {
-        // get the active bookings count for the full_property boardings
-        const activeBookingCount = fullPropertyActiveBookings.get(String(boarding._id)) || 0;
-        return {
-          ...boarding,
-          // if activeBookingCount is 0, then all rooms are available, else no rooms are available
-          availableRooms: activeBookingCount === 0 ? boarding.totalRooms : 0
-        };
+        const stats = roomStatsByBoarding.get(bId) || { totalRooms: 0, availableRooms: 0, minPrice: 0 };
+        enriched.totalRooms = stats.totalRooms;
+        enriched.availableRooms = stats.availableRooms;
+        enriched.price = stats.minPrice;
+      } else {
+        const activeCount = fullPropertyActiveBookings.get(bId) || 0;
+        enriched.availableRooms = activeCount === 0 ? boarding.totalRooms : 0;
       }
-      return boarding;
+      return enriched;
     });
+
+    // Apply secondary sorting in memory
+    if (sortBy === "price_low") {
+      response.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (sortBy === "price_high") {
+      response.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (sortBy === "rating") {
+      response.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (sortBy === "recommended" && preferences) {
+      try {
+        response.sort((a, b) => calculateScore(b, preferences) - calculateScore(a, preferences));
+      } catch (sortErr) {
+        console.error("Sorting recommendation error:", sortErr);
+      }
+    }
 
     return res.json(response);
   } catch (error) {
@@ -559,3 +541,23 @@ export const getAdminStats = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+// Rate boardings according to the past details and suggest the better one for the tenant
+export const rateBoardings = async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    const boardings = await Boarding.find();
+    const ratedBoardings = boardings.map((boarding) => ({
+      ...boarding,
+      score: calculateScore(boarding, preferences),
+    }));
+
+    // Sort boardings by score in descending order
+    ratedBoardings.sort((a, b) => b.score - a.score);
+    return res.json(ratedBoardings);
+  } catch (error) {
+    console.error("RATE_BOARDINGS_ERROR:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+

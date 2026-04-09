@@ -86,6 +86,13 @@ const boardingSchema = new mongoose.Schema(
   }
 );
 
+// Performance Indexes
+boardingSchema.index({ owner: 1 });
+boardingSchema.index({ city: 1 });
+boardingSchema.index({ status: 1 });
+boardingSchema.index({ price: 1 });
+boardingSchema.index({ createdAt: -1 });
+
 const Boarding = mongoose.model("Boarding", boardingSchema);
 
 export default Boarding;

@@ -1,6 +1,7 @@
 import React from 'react';
 import UserNavbar from '../../components/common/UserNavbar';
 import UserSidebar from '../../components/common/UserSidebar';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calendar,
@@ -92,7 +93,6 @@ export default function MyBookings() {
                         </TabsList>
                     </motion.div>
 
-                    <AnimatePresence mode="wait">
                         <TabsContent value="active" className="space-y-8 outline-none mt-0">
                             <motion.div
                                 variants={containerVariants}
@@ -101,13 +101,22 @@ export default function MyBookings() {
                                 className="space-y-6"
                             >
                                 {loading && <p className="text-center p-12 text-slate-400 font-bold">Sequencing active stay data...</p>}
+                                {!loading && bookingsList.filter(b => b.status === "approved").length === 0 && (
+                                    <div className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                            <Home className="w-10 h-10 text-slate-300" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">No Active Stays</h3>
+                                        <p className="text-slate-400 font-bold max-w-sm mx-auto leading-relaxed">You do not have any currently active, approved leases at the moment.</p>
+                                    </div>
+                                )}
                                 {!loading && bookingsList.filter(b => b.status === "approved").map((booking) => (
-                                    <motion.div key={booking._id} variants={itemVariants}>
+                                    <motion.div key={booking._id} variants={itemVariants} initial="hidden" animate="visible">
                                         <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2.5rem] hover:shadow-2xl transition-all duration-500 group">
                                             <CardContent className="p-0">
                                                 <div className="flex flex-col lg:flex-row">
                                                     <div className="lg:w-80 h-64 lg:h-auto overflow-hidden relative">
-                                                        <img src={booking.boarding?.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} alt={booking.boarding?.boardingName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                        <img src={booking.boarding?.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} alt={booking.boarding?.boardingName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                         <div className="absolute top-6 left-6">
                                                             <Badge className="bg-emerald-500 text-white border-none font-black px-3 py-1 text-[10px] uppercase tracking-widest shadow-lg">
                                                                 {booking.status.toUpperCase()}
@@ -153,9 +162,11 @@ export default function MyBookings() {
                                                             <Button variant="outline" className="rounded-2xl border-slate-100 font-black h-12 px-8 gap-3 bg-white hover:bg-slate-50 transition-all active:scale-95 text-slate-600">
                                                                 <MessageSquare className="w-4 h-4" /> Message Landlord
                                                             </Button>
-                                                            <Button variant="ghost" className="rounded-2xl font-black text-primary hover:bg-primary/5 transition-all ml-auto gap-2">
-                                                                Property Details <ChevronRight className="w-4 h-4" />
-                                                            </Button>
+                                                            <Link to={`/boarding/${booking.boarding?._id}`} className="ml-auto">
+                                                                <Button variant="ghost" className="rounded-2xl font-black text-primary hover:bg-primary/5 transition-all gap-2">
+                                                                    Property Details <ChevronRight className="w-4 h-4" />
+                                                                </Button>
+                                                            </Link>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -174,12 +185,21 @@ export default function MyBookings() {
                                 className="space-y-4"
                             >
                                 {loading && <p className="text-center p-12 text-slate-400 font-bold">Scanning pending requests...</p>}
+                                {!loading && bookingsList.filter(b => b.status === "pending").length === 0 && (
+                                    <div className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                            <AlertCircle className="w-10 h-10 text-slate-300" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">No Pending Requests</h3>
+                                        <p className="text-slate-400 font-bold max-w-sm mx-auto leading-relaxed">You do not have any lease applications awaiting landlord approval.</p>
+                                    </div>
+                                )}
                                 {!loading && bookingsList.filter(b => b.status === "pending").map((booking) => (
-                                    <motion.div key={booking._id} variants={itemVariants}>
+                                    <motion.div key={booking._id} variants={itemVariants} initial="hidden" animate="visible">
                                         <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2rem] opacity-90 hover:opacity-100 transition-all hover:shadow-xl duration-500">
                                             <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8">
                                                 <div className="w-24 h-24 rounded-[1.5rem] overflow-hidden shrink-0 shadow-inner">
-                                                    <img src={booking.boarding?.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} className="w-full h-full object-cover" />
+                                                    <img src={booking.boarding?.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} className="w-full h-full object-cover" />
                                                 </div>
                                                 <div className="flex-grow text-center md:text-left">
                                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
@@ -203,19 +223,47 @@ export default function MyBookings() {
 
                         <TabsContent value="past" className="outline-none mt-0">
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200"
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="space-y-4"
                             >
-                                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                                    <History className="w-10 h-10 text-slate-300" />
-                                </div>
-                                <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">No history recorded</h3>
-                                <p className="text-slate-400 font-bold max-w-sm mx-auto leading-relaxed">Your stay history and finalized lease agreements will appear here safely.</p>
-                                <Button className="mt-8 rounded-xl font-black px-8 h-12 bg-slate-900 hover:bg-black transition-all">Explore Marketplace</Button>
+                                {loading && <p className="text-center p-12 text-slate-400 font-bold">Retrieving history logs...</p>}
+                                {!loading && bookingsList.filter(b => ["rejected", "cancelled", "completed"].includes(b.status)).map((booking) => (
+                                    <motion.div key={booking._id} variants={itemVariants} initial="hidden" animate="visible">
+                                        <Card className="border-none shadow-sm overflow-hidden bg-white rounded-[2rem] hover:shadow-xl transition-all duration-500">
+                                            <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8 opacity-60 hover:opacity-100 transition-opacity">
+                                                <div className="w-24 h-24 rounded-[1.5rem] overflow-hidden shrink-0 shadow-inner grayscale">
+                                                    <img src={booking.boarding?.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300&auto=format&fit=crop&q=60"} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex-grow text-center md:text-left">
+                                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+                                                        <h3 className="text-2xl font-black text-slate-900 line-through decoration-slate-300">{booking.boarding?.boardingName}</h3>
+                                                        <Badge className={`border-none font-black text-[10px] uppercase tracking-widest px-3 ${booking.status === 'rejected' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>{booking.status}</Badge>
+                                                    </div>
+                                                    <p className="text-slate-400 font-bold flex items-center justify-center md:justify-start gap-2">
+                                                        <MapPin className="w-4 h-4 text-slate-300" /> {booking.boarding?.address || "Location Hidden"}
+                                                    </p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                ))}
+                                {!loading && bookingsList.filter(b => ["rejected", "cancelled", "completed"].includes(b.status)).length === 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200"
+                                    >
+                                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                            <History className="w-10 h-10 text-slate-300" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">No history recorded</h3>
+                                        <p className="text-slate-400 font-bold max-w-sm mx-auto leading-relaxed">Your stay history and finalized lease agreements will appear here safely.</p>
+                                    </motion.div>
+                                )}
                             </motion.div>
                         </TabsContent>
-                    </AnimatePresence>
                 </Tabs>
             </main>
         </div>

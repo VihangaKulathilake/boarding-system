@@ -4,7 +4,8 @@ import {
   updateCurrentUserProfile,
   changePassword,
   getUsers,
-  adminGetUserById
+  adminGetUserById,
+  updateUserPreferences
 } from "../controllers/userController.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
@@ -17,5 +18,6 @@ router.get("/:id", protect, authorizeRoles("admin"), adminGetUserById);
 router.get("/me", protect, getCurrentUserProfile);
 router.put("/me", protect, updateCurrentUserProfile);
 router.put("/me/password", protect, changePassword);
+router.put("/me/preferences", protect, updateUserPreferences);
 
 export default router;

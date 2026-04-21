@@ -22,6 +22,15 @@ export const updateMe = async (userData) => {
   }
 };
 
+export const updatePreferences = async (preferences) => {
+  try {
+    const { data } = await axiosInstance.put(`${USERS_BASE}/me/preferences`, preferences);
+    return data;
+  } catch (error) {
+    throw toApiError(error, "Failed to update preferences.");
+  }
+};
+
 export const changePassword = async (passwordData) => {
   try {
     const { data } = await axiosInstance.put(`${USERS_BASE}/me/password`, passwordData);

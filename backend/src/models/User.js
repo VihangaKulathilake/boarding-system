@@ -37,8 +37,19 @@ const userSchema = mongoose.Schema(
       default: false,
     },
     address: {
-       type: String,
-       trim: true
+      type: String,
+      trim: true
+    },
+    preferences: {
+      preferredCities: [String],
+      minPrice: Number,
+      maxPrice: Number,
+      requiredFacilities: [String],
+      preferredType: {
+        type: String,
+        enum: ["room_based", "full_property", "any"],
+        default: "any"
+      }
     }
   },
   {

@@ -130,3 +130,35 @@ export const adminGetUserById = async (req, res) => {
     return res.status(500).json({ message: "Server error while fetching targeted user" });
   }
 };
+// PUT /api/users/me/preferences - Update logged-in user's boarding preferences
+export const updateUserPreferences = async (req, res) => {
+  try {
+    const { preferredCities, minPrice, maxPrice, requiredFacilities, preferredType } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Initialize preferences if they don't exist
+    if (!user.preferences) {
+      user.preferences = {};
+    }
+
+    if (preferredCities !== undefined) user.preferences.preferredCities = preferredCities;
+    if (minPrice !== undefined) user.preferences.minPrice = Number(minPrice);
+    if (maxPrice !== undefined) user.preferences.maxPrice = Number(maxPrice);
+    if (requiredFacilities !== undefined) user.preferences.requiredFacilities = requiredFacilities;
+    if (preferredType !== undefined) user.preferences.preferredType = preferredType;
+
+    await user.save();
+
+    return res.json({
+      message: "Preferences updated successfully",
+      preferences: user.preferences,
+    });
+  } catch (error) {
+    console.error("UPDATE_USER_PREFERENCES_ERROR:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

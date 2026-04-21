@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Payment from "../models/payment.js";
 import Booking from "../models/booking.js";
 import Boarding from "../models/boarding.js";
+import Room from "../models/room.js";
 import { isAdmin, isOwnerOrAdmin } from "../utils/authHelpers.js";
 import { PaymentContext, StrategyFactory } from "../services/payment/PaymentStrategy.js";
 
@@ -153,6 +154,33 @@ export const updatePaymentStatus = async (req, res) => {
 
         payment.status = status;
         await payment.save();
+
+        // Automatically synchronize the associated Request/Booking
+        const booking = await Booking.findOne({ payment: id });
+        if (booking) {
+            if (status === 'completed') {
+                booking.status = 'approved';
+                // Lock the room capacity
+                if (booking.room) {
+                    const room = await Room.findById(booking.room);
+                    if (room && room.available) {
+                        room.available = false;
+                        await room.save();
+                    }
+                }
+            } else if (status === 'failed') {
+                booking.status = 'rejected';
+                // Release the room capacity
+                if (booking.room) {
+                    const room = await Room.findById(booking.room);
+                    if (room && !room.available) {
+                        room.available = true;
+                        await room.save();
+                    }
+                }
+            }
+            await booking.save();
+        }
 
         return res.json({
             message: "Payment status updated successfully",

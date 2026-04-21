@@ -10,6 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useSearchParams } from 'react-router-dom';
 import { getBoardings } from "@/api/boardings";
+import { getMe, updatePreferences } from "@/api/users";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Sparkles } from "lucide-react";
 
 
 const containerVariants = {
@@ -40,7 +45,22 @@ export default function Marketplace() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const [priceRange, setPriceRange] = useState("all");
+    const [sortBy, setSortBy] = useState("recommended");
+
+    // Preferences Modal State
+    const [isPrefsModalOpen, setIsPrefsModalOpen] = useState(false);
+    const [prefs, setPrefs] = useState({
+        preferredCities: [],
+        minPrice: 0,
+        maxPrice: 50000,
+        requiredFacilities: [],
+        preferredType: "Any"
+    });
+    const [isSavingPrefs, setIsSavingPrefs] = useState(false);
+
+    React.useEffect(() => {
+        fetchUserPrefs();
+    }, []);
 
     React.useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -53,16 +73,15 @@ export default function Marketplace() {
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchQuery, selectedCategory, priceRange]);
+    }, [searchQuery, selectedCategory, sortBy]);
 
     const fetchBoardings = async () => {
         try {
             setLoading(true);
             const params = {};
             if (searchQuery) params.q = searchQuery;
-            if (priceRange === 'low') { params.maxPrice = 15000; }
-            else if (priceRange === 'mid') { params.minPrice = 15000; params.maxPrice = 30000; }
-            else if (priceRange === 'high') { params.minPrice = 30000; }
+
+            if (sortBy) params.sortBy = sortBy;
 
             let data = await getBoardings(params);
 
@@ -82,206 +101,341 @@ export default function Marketplace() {
         }
     };
 
+    const fetchUserPrefs = async () => {
+        try {
+            const user = await getMe();
+            if (user && user.preferences) {
+                setPrefs({
+                    preferredCities: user.preferences.preferredCities || [],
+                    minPrice: user.preferences.minPrice || 0,
+                    maxPrice: user.preferences.maxPrice || 50000,
+                    requiredFacilities: user.preferences.requiredFacilities || [],
+                    preferredType: user.preferences.preferredType || "any"
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching user preferences:", error);
+        }
+    };
+
+    const handleSavePrefs = async () => {
+        try {
+            setIsSavingPrefs(true);
+            await updatePreferences(prefs);
+            setIsPrefsModalOpen(false);
+            fetchBoardings(); // Refresh results with new recommendations
+        } catch (error) {
+            console.error("Error saving preferences:", error);
+        } finally {
+            setIsSavingPrefs(false);
+        }
+    };
+
+    const commonFacilities = ["Wifi", "Parking", "Kitchen", "AC", "Laundry", "Gym"];
+
     return (
         <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
             <UserNavbar />
-            <div className="flex flex-1">
+            <div className="flex flex-1 overflow-hidden">
                 <UserSidebar />
                 <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
-                {/* Search & Filter Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8"
-                >
-                    <div className="w-full md:w-1/2 relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                        <Input
-                            placeholder="Where do you want to stay?"
-                            className="w-full pl-12 h-14 bg-white border-none shadow-sm rounded-2xl text-lg focus-visible:ring-primary/20 transition-all focus:shadow-md"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <Select value={priceRange} onValueChange={setPriceRange}>
-                            <SelectTrigger className="w-[140px] h-12 bg-white border-none shadow-sm rounded-xl focus:ring-primary/20">
-                                <SelectValue placeholder="Price Range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Prices</SelectItem>
-                                <SelectItem value="low">Under 15k</SelectItem>
-                                <SelectItem value="mid">15k - 30k</SelectItem>
-                                <SelectItem value="high">30k+</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" className="h-12 border-none shadow-sm bg-white rounded-xl gap-2 font-bold px-6 hover:bg-slate-50 active:scale-95 transition-all">
-                            <Filter className="w-4 h-4" /> Filters
-                        </Button>
-                    </div>
-                </motion.div>
+                    {/* Search & Filter Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8"
+                    >
+                        <div className="w-full md:w-1/2 relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <Input
+                                placeholder="Where do you want to stay?"
+                                className="w-full pl-12 h-14 bg-white border-none shadow-sm rounded-2xl text-lg focus-visible:ring-primary/20 transition-all focus:shadow-md"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <Select value={sortBy} onValueChange={setSortBy}>
+                                <SelectTrigger className="w-[160px] h-12 bg-white border-none shadow-sm rounded-xl focus:ring-primary/20">
+                                    <SelectValue placeholder="Sort By" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="recommended">Recommended</SelectItem>
+                                    <SelectItem value="newest">Newest First</SelectItem>
+                                    <SelectItem value="price_low">Price: Low to High</SelectItem>
+                                    <SelectItem value="price_high">Price: High to Low</SelectItem>
+                                    <SelectItem value="rating">Top Rated</SelectItem>
+                                </SelectContent>
+                            </Select>
 
-                {/* Categories */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="flex gap-4 overflow-x-auto pb-4 mb-8 no-scrollbar"
-                >
-                    {["All", "Studio", "Shared Room", "Single Room", "Entire House", "Apartment"].map((cat) => (
-                        <Button
-                            key={cat}
-                            variant={selectedCategory === cat ? "default" : "outline"}
-                            onClick={() => setSelectedCategory(cat)}
-                            className={`rounded-full px-6 whitespace-nowrap border-none shadow-sm transition-all active:scale-95 ${selectedCategory === cat ? "shadow-primary/20" : "bg-white hover:bg-slate-100"}`}
-                        >
-                            {cat}
-                        </Button>
-                    ))}
-                </motion.div>
+                            {/* Preferences Modal */}
+                            <Dialog open={isPrefsModalOpen} onOpenChange={setIsPrefsModalOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="h-12 border-none shadow-indigo-100 shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 font-bold px-6 active:scale-95 transition-all">
+                                        <Sparkles className="w-4 h-4" /> Personalize
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md bg-white rounded-3xl border-none shadow-2xl p-8">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl font-black text-slate-950">Personalize Your Feed</DialogTitle>
+                                        <DialogDescription className="text-slate-500 font-medium">
+                                            Tell us what you're looking for to get better recommendations.
+                                        </DialogDescription>
+                                    </DialogHeader>
 
-                {/* Results Count */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="mb-8"
-                >
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Found {boardingsList.length} Boardings</h2>
-                    <p className="text-slate-500 font-medium">Showing curated matches based on your preferences</p>
-                </motion.div>
+                                    <div className="space-y-8 py-6">
+                                        {/* Type */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Preferred Type</Label>
+                                            <Select value={prefs.preferredType} onValueChange={(value) => setPrefs({ ...prefs, preferredType: value })}>
+                                                <SelectTrigger className="w-full h-12 bg-white border-none shadow-sm rounded-xl focus:ring-primary/20">
+                                                    <SelectValue placeholder="Select Type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="any">Any</SelectItem>
+                                                    <SelectItem value="full_property">House</SelectItem>
+                                                    <SelectItem value="room_based">Room</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
 
-                {/* Grid */}
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12"
-                >
-                    <AnimatePresence mode="popLayout">
-                        {loading && <p className="col-span-full text-center p-12 text-slate-400 font-bold italic tracking-widest">Scanning Boarding Infrastructure...</p>}
-                        {!loading && boardingsList.map((boarding) => (
-                            <motion.div
-                                key={boarding._id}
-                                variants={itemVariants}
-                                layout
-                                whileHover={{ y: -12 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                className="h-full"
-                            >
-                                <Link to={`/boarding/${boarding._id}`} className="block group h-full focus:outline-none">
-                                    <Card className="relative h-full flex flex-col bg-white rounded-[2rem] border-none overflow-hidden transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)]">
-                                        
-                                        {/* Image Container */}
-                                        <div className="relative aspect-[4/3] w-full overflow-hidden">
-                                            <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors duration-500 z-10" />
-                                            <motion.img
-                                                src={boarding.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&auto=format&fit=crop&q=60"}
-                                                alt={boarding.boardingName}
-                                                className="w-full h-full object-cover"
-                                                initial={{ scale: 1 }}
-                                                whileHover={{ scale: 1.08 }}
-                                                transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                        {/* Cities */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Preferred Cities</Label>
+                                            <Input
+                                                placeholder="e.g. Colombo, Kandy (comma separated)"
+                                                value={prefs.preferredCities.join(", ")}
+                                                onChange={(e) => setPrefs({ ...prefs, preferredCities: e.target.value.split(",").map(c => c.trim()) })}
+                                                className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
                                             />
-                                            
-                                            {/* Badges Overlay */}
-                                            <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
-                                                <Badge className="bg-white/90 text-slate-900 hover:bg-white border-none backdrop-blur-md shadow-sm px-4 py-1.5 font-bold rounded-full uppercase text-[10px] tracking-widest">
-                                                    {boarding.type?.replace('_', ' ') || "Boarding"}
-                                                </Badge>
-                                                <motion.button
-                                                    whileTap={{ scale: 0.9 }}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        // Handle wishlist logic
-                                                    }}
-                                                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 shadow-sm transition-all"
-                                                >
-                                                    <Heart className="w-5 h-5 transition-colors" />
-                                                </motion.button>
-                                            </div>
+                                        </div>
 
-                                            {/* Quick Info Overlay */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20 flex items-center gap-4 text-white">
-                                                {boarding.amenities?.slice(0, 2).map(amenity => (
-                                                    <div key={amenity} className="flex items-center gap-1.5">
-                                                        <span className="text-xs font-medium uppercase tracking-tight">{amenity}</span>
+                                        {/* Price Range */}
+                                        <div className="space-y-4">
+                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Budget Range (Rs.)</Label>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex-1">
+                                                    <span className="text-[10px] text-slate-400 font-bold block mb-1 uppercase tracking-tighter">Min</span>
+                                                    <Input
+                                                        type="number"
+                                                        value={prefs.minPrice}
+                                                        onChange={(e) => setPrefs({ ...prefs, minPrice: Number(e.target.value) })}
+                                                        className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <span className="text-[10px] text-slate-400 font-bold block mb-1 uppercase tracking-tighter">Max</span>
+                                                    <Input
+                                                        type="number"
+                                                        value={prefs.maxPrice}
+                                                        onChange={(e) => setPrefs({ ...prefs, maxPrice: Number(e.target.value) })}
+                                                        className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Facilities */}
+                                        <div className="space-y-4">
+                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Essential Facilities</Label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {commonFacilities.map(facility => (
+                                                    <div key={facility} className="flex items-center space-x-3 bg-slate-50 p-3 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => {
+                                                        const current = prefs.requiredFacilities;
+                                                        const updated = current.includes(facility)
+                                                            ? current.filter(f => f !== facility)
+                                                            : [...current, facility];
+                                                        setPrefs({ ...prefs, requiredFacilities: updated });
+                                                    }}>
+                                                        <Checkbox
+                                                            id={facility}
+                                                            checked={prefs.requiredFacilities.includes(facility)}
+                                                            className="data-[state=checked]:bg-indigo-600 border-slate-300"
+                                                        />
+                                                        <Label htmlFor={facility} className="text-xs font-bold text-slate-600 cursor-pointer">{facility}</Label>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <CardHeader className="p-5 pb-0">
-                                            <div className="flex justify-between items-start gap-4">
-                                                <div className="space-y-1.5 flex-1 min-w-0">
-                                                    <CardTitle className="text-xl font-black text-slate-900 leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-                                                        {boarding.boardingName}
-                                                    </CardTitle>
-                                                    <div className="flex items-center gap-1.5 text-slate-500">
-                                                        <MapPin className="w-4 h-4 shrink-0 text-primary/80" />
-                                                        <p className="text-sm font-medium truncate">
-                                                            {boarding.address || "Location Pending"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col items-end shrink-0 gap-1 mt-1">
-                                                    <div className="flex items-center gap-1 bg-amber-100/80 text-amber-700 px-2.5 py-1 rounded-lg">
-                                                        <Star className="w-3.5 h-3.5 flex-shrink-0 fill-amber-500 text-amber-500" />
-                                                        <span className="text-sm font-black">{boarding.rating || "New"}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </CardHeader>
+                                    <DialogFooter>
+                                        <Button
+                                            onClick={handleSavePrefs}
+                                            disabled={isSavingPrefs}
+                                            className="w-full bg-slate-900 hover:bg-slate-800 text-white h-14 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-slate-200"
+                                        >
+                                            {isSavingPrefs ? "Syncing..." : "Update Recommendations"}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </motion.div>
 
-                                        <CardContent className="p-5 pt-4 flex-grow flex flex-col justify-end">
-                                            <div className="flex gap-2 flex-wrap pt-4 border-t border-slate-100">
-                                                {boarding.facilities?.slice(0, 3).map((facility) => (
-                                                    <Badge key={facility} variant="secondary" className="bg-slate-50 text-slate-500 text-[9px] font-black uppercase tracking-tighter rounded-md px-2 py-0.5 border-none">
-                                                        {facility}
-                                                    </Badge>
-                                                ))}
-                                                {(!boarding.facilities || boarding.facilities.length === 0) && (
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Standard Amenities</p>
-                                                )}
-                                            </div>
-                                        </CardContent>
-
-                                        <CardFooter className="p-5 pt-0 mt-auto flex items-center justify-between">
-                                            <div className="flex flex-col">
-                                                <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] block mb-0.5">
-                                                    {boarding.type === "room_based" ? "Starting from" : "Monthly Rent"}
-                                                </span>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-2xl font-black text-slate-900 leading-none">
-                                                        Rs. {boarding.price?.toLocaleString() || "P.O.A"}
-                                                    </span>
-                                                    {boarding.type === "room_based" && <span className="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">/MONTH</span>}
-                                                </div>
-                                            </div>
-                                            
-                                            <motion.div 
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="bg-slate-900 group-hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg transition-all flex items-center gap-2"
-                                            >
-                                                Explore
-                                                <motion.span
-                                                    initial={{ x: 0 }}
-                                                    whileHover={{ x: 4 }}
-                                                    transition={{ type: "spring", stiffness: 400 }}
-                                                >
-                                                    →
-                                                </motion.span>
-                                            </motion.div>
-                                        </CardFooter>
-                                    </Card>
-                                </Link>
-                            </motion.div>
+                    {/* Categories */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex gap-4 overflow-x-auto pb-4 mb-8 no-scrollbar"
+                    >
+                        {[
+                            { label: "All", value: "All" },
+                            { label: "House", value: "full_property" },
+                            { label: "Room", value: "room_based" }
+                        ].map((cat) => (
+                            <Button
+                                key={cat.value}
+                                variant={selectedCategory === cat.value ? "default" : "outline"}
+                                onClick={() => setSelectedCategory(cat.value)}
+                                className={`rounded-full px-6 whitespace-nowrap border-none shadow-sm transition-all active:scale-95 ${selectedCategory === cat.value ? "shadow-primary/20 bg-primary text-white" : "bg-white hover:bg-slate-100 text-slate-600"}`}
+                            >
+                                {cat.label}
+                            </Button>
                         ))}
-                    </AnimatePresence>
-                </motion.div>
-            </main>
+                    </motion.div>
+
+                    {/* Results Count */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mb-8"
+                    >
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Found {boardingsList.length} Boardings</h2>
+                        <p className="text-slate-500 font-medium">Showing curated matches based on your preferences</p>
+                    </motion.div>
+
+                    {/* Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
+                        <AnimatePresence mode="wait">
+                            {loading ? (
+                                <motion.p
+                                    key="loading"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="col-span-full text-center p-12 text-slate-400 font-bold italic tracking-widest"
+                                >
+                                    Scanning Boarding Infrastructure...
+                                </motion.p>
+                            ) : (
+                                boardingsList.map((boarding) => (
+                                    <motion.div
+                                        key={boarding._id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        whileHover={{ y: -12 }}
+                                        transition={{ duration: 0.4, ease: "easeOut" }}
+                                        className="h-full"
+                                    >
+                                        <Link to={`/boarding/${boarding._id}`} className="block group h-full focus:outline-none">
+                                            <Card className="relative h-full flex flex-col bg-white rounded-[2rem] border-none overflow-hidden transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)]">
+
+                                                {/* Image Container */}
+                                                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                                    <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors duration-500 z-10" />
+                                                    <motion.img
+                                                        src={boarding.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&auto=format&fit=crop&q=60"}
+                                                        alt={boarding.boardingName}
+                                                        loading="lazy"
+                                                        className="w-full h-full object-cover"
+                                                        initial={{ scale: 1 }}
+                                                        whileHover={{ scale: 1.08 }}
+                                                        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                                    />
+
+                                                    {/* Badges Overlay */}
+                                                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
+                                                        <Badge className="bg-white/90 text-slate-900 hover:bg-white border-none backdrop-blur-md shadow-sm px-4 py-1.5 font-bold rounded-full uppercase text-[10px] tracking-widest">
+                                                            {boarding.type?.replace('_', ' ') || "Boarding"}
+                                                        </Badge>
+                                                        <motion.button
+                                                            whileTap={{ scale: 0.9 }}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                // Handle wishlist logic
+                                                            }}
+                                                            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 shadow-sm transition-all"
+                                                        >
+                                                            <Heart className="w-5 h-5 transition-colors" />
+                                                        </motion.button>
+                                                    </div>
+
+                                                    {/* Quick Info Overlay */}
+                                                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20 flex items-center gap-4 text-white">
+                                                        {(boarding.amenities || boarding.facilities)?.slice(0, 2).map(amenity => (
+                                                            <div key={amenity} className="flex items-center gap-1.5">
+                                                                <span className="text-xs font-medium uppercase tracking-tight">{amenity}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <CardHeader className="p-5 pb-0">
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div className="space-y-1.5 flex-1 min-w-0">
+                                                            <CardTitle className="text-xl font-black text-slate-900 leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                                                                {boarding.boardingName}
+                                                            </CardTitle>
+                                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                                <MapPin className="w-4 h-4 shrink-0 text-primary/80" />
+                                                                <p className="text-sm font-medium truncate">
+                                                                    {boarding.address || "Location Pending"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col items-end shrink-0 gap-1 mt-1">
+                                                            <div className="flex items-center gap-1 bg-amber-100/80 text-amber-700 px-2.5 py-1 rounded-lg">
+                                                                <Star className="w-3.5 h-3.5 flex-shrink-0 fill-amber-500 text-amber-500" />
+                                                                <span className="text-sm font-black">{boarding.rating || "New"}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </CardHeader>
+
+                                                <CardContent className="p-5 pt-4 flex-grow flex flex-col justify-end">
+                                                    <div className="flex gap-2 flex-wrap pt-4 border-t border-slate-100">
+                                                        {boarding.facilities?.slice(0, 4).map((facility) => (
+                                                            <Badge key={facility} variant="secondary" className="bg-slate-50 text-slate-500 text-[9px] font-black uppercase tracking-tighter rounded-md px-2 py-0.5 border-none">
+                                                                {facility}
+                                                            </Badge>
+                                                        ))}
+                                                        {(!boarding.facilities || boarding.facilities.length === 0) && (
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Standard Amenities</p>
+                                                        )}
+                                                    </div>
+                                                </CardContent>
+
+                                                <CardFooter className="p-5 pt-0 mt-auto flex items-center justify-between">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] block mb-0.5">
+                                                            {boarding.type === "room_based" ? "Starting from" : "Monthly Rent"}
+                                                        </span>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-2xl font-black text-slate-900 leading-none">
+                                                                Rs. {boarding.price?.toLocaleString() || "P.O.A"}
+                                                            </span>
+                                                            {boarding.type === "room_based" && <span className="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">/MONTH</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-slate-900 group-hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg transition-all flex items-center gap-2">
+                                                        Explore
+                                                        <span className="transition-transform group-hover:translate-x-1">→</span>
+                                                    </div>
+                                                </CardFooter>
+                                            </Card>
+                                        </Link>
+                                    </motion.div>
+                                ))
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </main>
+            </div>
         </div>
-    </div>
     );
 }
+

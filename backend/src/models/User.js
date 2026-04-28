@@ -41,7 +41,12 @@ const userSchema = mongoose.Schema(
       trim: true
     },
     preferences: {
-      preferredCities: [String],
+      preferredLocations: [{
+        name: String,              // e.g., "San Francisco" or "123 Main Street"
+        lat: Number,               // latitude
+        lng: Number,               // longitude
+        locationType: String       // "city" or "place"
+      }],
       minPrice: Number,
       maxPrice: Number,
       requiredFacilities: [String],

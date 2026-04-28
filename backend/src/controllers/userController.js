@@ -133,7 +133,7 @@ export const adminGetUserById = async (req, res) => {
 // PUT /api/users/me/preferences - Update logged-in user's boarding preferences
 export const updateUserPreferences = async (req, res) => {
   try {
-    const { preferredCities, minPrice, maxPrice, requiredFacilities, preferredType } = req.body;
+    const { preferredLocations, minPrice, maxPrice, requiredFacilities, preferredType } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -145,7 +145,7 @@ export const updateUserPreferences = async (req, res) => {
       user.preferences = {};
     }
 
-    if (preferredCities !== undefined) user.preferences.preferredCities = preferredCities;
+    if (preferredLocations !== undefined) user.preferences.preferredLocations = preferredLocations;
     if (minPrice !== undefined) user.preferences.minPrice = Number(minPrice);
     if (maxPrice !== undefined) user.preferences.maxPrice = Number(maxPrice);
     if (requiredFacilities !== undefined) user.preferences.requiredFacilities = requiredFacilities;

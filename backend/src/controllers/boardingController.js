@@ -147,7 +147,9 @@ export const createBoarding = async (req, res) => {
     });
   } catch (error) {
     console.error("CREATE_BOARDING_UNEXPECTED_ERROR:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res.sta
+
+    tus(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -157,6 +159,23 @@ export const getBoardings = async (req, res) => {
 
     // Extract query parameters for filtering
     const { q, city, minPrice, maxPrice, totalRooms, status, owner, mine, sortBy } = req.query;
+
+    // Fetch user preferences to check for specific places
+    let preferredLocation = null;
+    if (req.user?.id) {
+      const user = await User.findById(req.user.id).select("preferences").lean();
+      if (user?.preferences?.preferredLocations && Array.isArray(user.preferences.preferredLocations)) {
+        // Look for a specific location (not a city)
+        const specificLocation = user.preferences.preferredLocations.find(loc => loc.locationType === "place");
+        if (specificLocation && specificLocation.lat && specificLocation.lng) {
+          preferredLocation = {
+            lat: specificLocation.lat,
+            lng: specificLocation.lng,
+            name: specificLocation.name
+          };
+        }
+      }
+    }
 
     // Build the filter object based on provided query parameters
     const filter = {};
@@ -212,10 +231,62 @@ export const getBoardings = async (req, res) => {
     let dbSort = { createdAt: -1 };
     if (sortBy === "newest") dbSort = { createdAt: -1 };
 
-    const boardings = await Boarding.find(filter)
-      .populate("owner", "name email role")
-      .sort(dbSort)
-      .lean();
+    // Use aggregation pipeline if preferredPlace exists
+    let boardings;
+
+    if (preferredLocation) {
+      // Build aggreagation pipeline with $geoNear
+      const pipeline = [
+        // $geoNear - Calculate distance from preferred place
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [preferredLocation.lng, preferredLocation.lat]
+            },
+            distanceField: "distance",
+            maxDistance: 50000, // 50 km
+            spherical: true
+          }
+        },
+
+        // $match - Apply filters
+        { $match: filter },
+
+        // $lookup - Join with User collection to get owner details
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner"
+          }
+        },
+
+        // $unwind - Flatten the owner array
+        {
+          $unwind: {
+            path: "$owner",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        // $sort - Apply initial sorting (e.g., by creation date)
+        { $sort: dbSort },
+      ];
+
+      try {
+        boardings = await Boarding.aggregate(pipeline);
+      } catch (error) {
+        console.error("AGGREGATION_ERROR:", error);
+        return res.status(500).json({ message: "Server error" });
+      }
+    } else {
+      // No preferred place, simple find with populate and sort
+      boardings = await Boarding.find(filter)
+        .populate("owner", "name email role")
+        .sort(dbSort)
+        .lean();
+    }
 
     if (boardings.length === 0) return res.json([]);
 
@@ -259,11 +330,13 @@ export const getBoardings = async (req, res) => {
     let response = boardings.map((boarding) => {
       const bId = String(boarding._id);
       const reviews = reviewStatsByBoarding.get(bId) || { avgRating: 0, totalReviews: 0 };
-      
+
       let enriched = {
         ...boarding,
         rating: reviews.avgRating ? Number(reviews.avgRating.toFixed(1)) : 0,
-        totalReviews: reviews.totalReviews
+        totalReviews: reviews.totalReviews,
+        // Include distance if it exists (from $geoNear)
+        distance: boarding.distance ? Math.round(boarding.distance / 1000 * 100) / 100 : null // distance in km rounded to 1 decimal place
       };
 
       if (boarding.type === "room_based") {

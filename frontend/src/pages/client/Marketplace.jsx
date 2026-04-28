@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
-
+import LocationSearch from '../../components/common/LocationSearch';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -50,7 +50,7 @@ export default function Marketplace() {
     // Preferences Modal State
     const [isPrefsModalOpen, setIsPrefsModalOpen] = useState(false);
     const [prefs, setPrefs] = useState({
-        preferredCities: [],
+        preferredLocations: [],
         minPrice: 0,
         maxPrice: 50000,
         requiredFacilities: [],
@@ -60,6 +60,24 @@ export default function Marketplace() {
 
     React.useEffect(() => {
         fetchUserPrefs();
+
+        // Clean all filters when exiting the marketplace
+        // The return () => { ... } part is like saying: "And hey,
+        // before you clock out and leave this page,
+        // I need you to do exactly this one last chore."
+        // This is called a cleanup function.
+        // The cleanup function runs when the component unmounts
+        // or before the effect runs again (if dependencies change).
+        // Here, it runs when the user leaves the Marketplace page.
+        return () => {
+            updatePreferences({
+                preferredLocations: [],
+                minPrice: 0,
+                maxPrice: 50000,
+                requiredFacilities: [],
+                preferredType: "any"
+            }).catch(e => console.error("Failed to clear filters on exit:", e));
+        };
     }, []);
 
     React.useEffect(() => {
@@ -106,7 +124,7 @@ export default function Marketplace() {
             const user = await getMe();
             if (user && user.preferences) {
                 setPrefs({
-                    preferredCities: user.preferences.preferredCities || [],
+                    preferredLocations: user.preferences.preferredLocations || [],
                     minPrice: user.preferences.minPrice || 0,
                     maxPrice: user.preferences.maxPrice || 50000,
                     requiredFacilities: user.preferences.requiredFacilities || [],
@@ -199,63 +217,97 @@ export default function Marketplace() {
                                             </Select>
                                         </div>
 
-                                        {/* Cities */}
+
+                                        {/* Preferred Locations with Nominatim Autocomplete */}
                                         <div className="space-y-3">
-                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Preferred Cities</Label>
-                                            <Input
-                                                placeholder="e.g. Colombo, Kandy (comma separated)"
-                                                value={prefs.preferredCities.join(", ")}
-                                                onChange={(e) => setPrefs({ ...prefs, preferredCities: e.target.value.split(",").map(c => c.trim()) })}
-                                                className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
+                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Preferred Locations</Label>
+
+                                            {/* Search Input */}
+                                            <LocationSearch
+                                                onLocationSelect={(location) => {
+                                                    // Add location if not already selected
+                                                    if (!prefs.preferredLocations.find(l => l.name === location.name)) {
+                                                        setPrefs({
+                                                            ...prefs,
+                                                            preferredLocations: [...prefs.preferredLocations, location]
+                                                        });
+                                                    }
+                                                }}
                                             />
-                                        </div>
 
-                                        {/* Price Range */}
-                                        <div className="space-y-4">
-                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Budget Range (Rs.)</Label>
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex-1">
-                                                    <span className="text-[10px] text-slate-400 font-bold block mb-1 uppercase tracking-tighter">Min</span>
-                                                    <Input
-                                                        type="number"
-                                                        value={prefs.minPrice}
-                                                        onChange={(e) => setPrefs({ ...prefs, minPrice: Number(e.target.value) })}
-                                                        className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
-                                                    />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <span className="text-[10px] text-slate-400 font-bold block mb-1 uppercase tracking-tighter">Max</span>
-                                                    <Input
-                                                        type="number"
-                                                        value={prefs.maxPrice}
-                                                        onChange={(e) => setPrefs({ ...prefs, maxPrice: Number(e.target.value) })}
-                                                        className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Facilities */}
-                                        <div className="space-y-4">
-                                            <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Essential Facilities</Label>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {commonFacilities.map(facility => (
-                                                    <div key={facility} className="flex items-center space-x-3 bg-slate-50 p-3 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => {
-                                                        const current = prefs.requiredFacilities;
-                                                        const updated = current.includes(facility)
-                                                            ? current.filter(f => f !== facility)
-                                                            : [...current, facility];
-                                                        setPrefs({ ...prefs, requiredFacilities: updated });
-                                                    }}>
-                                                        <Checkbox
-                                                            id={facility}
-                                                            checked={prefs.requiredFacilities.includes(facility)}
-                                                            className="data-[state=checked]:bg-indigo-600 border-slate-300"
-                                                        />
-                                                        <Label htmlFor={facility} className="text-xs font-bold text-slate-600 cursor-pointer">{facility}</Label>
+                                            {/* Display Selected Locations as Tags */}
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {prefs.preferredLocations.map((location, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                                                    >
+                                                        <MapPin className="w-3 h-3" />
+                                                        {location.name}
+                                                        <span className="text-xs text-indigo-500">({location.locationType})</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                setPrefs({
+                                                                    ...prefs,
+                                                                    preferredLocations: prefs.preferredLocations.filter((_, i) => i !== idx)
+                                                                });
+                                                            }}
+                                                            className="text-indigo-500 hover:text-indigo-700 font-bold"
+                                                        >
+                                                            ✕
+                                                        </button>
                                                     </div>
                                                 ))}
                                             </div>
+                                        </div>
+                                    </div>
+
+
+                                    {/* Price Range */}
+                                    <div className="space-y-4">
+                                        <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Budget Range (Rs.)</Label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <span className="text-[10px] text-slate-400 font-bold block mb-1 uppercase tracking-tighter">Min</span>
+                                                <Input
+                                                    type="number"
+                                                    value={prefs.minPrice}
+                                                    onChange={(e) => setPrefs({ ...prefs, minPrice: Number(e.target.value) })}
+                                                    className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <span className="text-[10px] text-slate-400 font-bold block mb-1 uppercase tracking-tighter">Max</span>
+                                                <Input
+                                                    type="number"
+                                                    value={prefs.maxPrice}
+                                                    onChange={(e) => setPrefs({ ...prefs, maxPrice: Number(e.target.value) })}
+                                                    className="bg-slate-50 border-none h-12 rounded-xl focus-visible:ring-indigo-500/20"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Facilities */}
+                                    <div className="space-y-4">
+                                        <Label className="text-sm font-black uppercase tracking-widest text-slate-400">Essential Facilities</Label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {commonFacilities.map(facility => (
+                                                <div key={facility} className="flex items-center space-x-3 bg-slate-50 p-3 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => {
+                                                    const current = prefs.requiredFacilities;
+                                                    const updated = current.includes(facility)
+                                                        ? current.filter(f => f !== facility)
+                                                        : [...current, facility];
+                                                    setPrefs({ ...prefs, requiredFacilities: updated });
+                                                }}>
+                                                    <Checkbox
+                                                        id={facility}
+                                                        checked={prefs.requiredFacilities.includes(facility)}
+                                                        className="data-[state=checked]:bg-indigo-600 border-slate-300"
+                                                    />
+                                                    <Label htmlFor={facility} className="text-xs font-bold text-slate-600 cursor-pointer">{facility}</Label>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
@@ -280,11 +332,11 @@ export default function Marketplace() {
                         transition={{ delay: 0.2 }}
                         className="flex gap-4 overflow-x-auto pb-4 mb-8 no-scrollbar"
                     >
-                        {[
+                        {([
                             { label: "All", value: "All" },
                             { label: "House", value: "full_property" },
                             { label: "Room", value: "room_based" }
-                        ].map((cat) => (
+                        ]).map((cat) => (
                             <Button
                                 key={cat.value}
                                 variant={selectedCategory === cat.value ? "default" : "outline"}
@@ -385,6 +437,14 @@ export default function Marketplace() {
                                                                     {boarding.address || "Location Pending"}
                                                                 </p>
                                                             </div>
+                                                            {boarding.distance && (
+                                                                <div className="flex items-center gap-1.5 text-indigo-600 pt-1">
+                                                                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                                                    <p className="text-xs font-bold uppercase tracking-tight">
+                                                                        {boarding.distance} km away
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <div className="flex flex-col items-end shrink-0 gap-1 mt-1">
                                                             <div className="flex items-center gap-1 bg-amber-100/80 text-amber-700 px-2.5 py-1 rounded-lg">

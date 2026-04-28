@@ -32,6 +32,13 @@ const boardingSchema = new mongoose.Schema(
       coordinates: {
         type: [Number], // [longitude, latitude]
         required: true,
+        validate: {
+          validator: function (v) {
+            // Ensure it's an array of exactly 2 numbers
+            return Array.isArray(v) && v.length === 2;
+          },
+          message: "Invalid coordinates. Must be [longitude, latitude] within valid ranges."
+        }
       },
     },
 
@@ -92,6 +99,7 @@ boardingSchema.index({ city: 1 });
 boardingSchema.index({ status: 1 });
 boardingSchema.index({ price: 1 });
 boardingSchema.index({ createdAt: -1 });
+boardingSchema.index({ "location": "2dsphere" });
 
 const Boarding = mongoose.model("Boarding", boardingSchema);
 
